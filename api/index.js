@@ -6,20 +6,22 @@ const loggerInterceptor = require('../network/loggerInterceptor');
 const errors = require('../network/errors');
 const errorsNotDefined = require('../network/errorsNotDefined');
 //const swaggerDoc = require('../swagger.json');
+const cors = require('cors');
 
-const wallet = require('./components/wallet/routes');
-const transaction = require('./components/transaction/routes');
-const auth = require('./components/auth/routes');
+const wallet = require('./components/wallet/router');
+const transaction = require('./components/transaction/router');
+const auth = require('./components/auth/router');
 
 const app = express();
 app.use(compression());
+app.use(cors());
 app.use(express.json());
 app.use(loggerInterceptor);
 
 //ROUTES
+app.use('/api/auth', auth);
 app.use('/api/wallet', wallet);
 app.use('/api/transaction', transaction);
-app.use('/api/auth', auth);
 
 //ERROR HANDLING
 app.use(errors);

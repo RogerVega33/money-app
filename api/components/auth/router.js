@@ -12,7 +12,7 @@ router.post('/password/change', changePassword);
 if(config.api.env === 'dev') router.post('/hash', secure(), getHash);
 
 function login(req, res){
-    controller.login(req.body.email, req.body.password)
+    controller.login(req.body.username, req.body.password)
         .then(body => {
             response.success(req, res, body, constants.http.ok);
         })

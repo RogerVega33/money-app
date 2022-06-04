@@ -42,12 +42,10 @@ function writeRequest(req, res){
 }
 
 function replaceSensitiveInformation(log){
-    let regex = /"userPassword" *: *".*"/;
-    log = log.replace(regex, '"userPassword": "*****"');
+    let regex = /"password" *: *".*"/;
+    log = log.replace(regex, '"password": "*****"');
     regex = /"token" *: *".*"/;
     log = log.replace(regex, '"token": "*****"');
-    regex = /"user_password" *: *".*"/;
-    log = log.replace(regex, '"user_password": "*****"');
     regex = /"oldPassword" *: *".*"/;
     log = log.replace(regex, '"oldPassword": "*****"');
     regex = /"newPassword" *: *".*"/;

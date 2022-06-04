@@ -9,15 +9,12 @@ module.exports = function(injectedStore) {
         store = require('../../../store/mysql');
     }
 
-    async function login(email, password){
-        const user = await store.query(TABLE, {email: email});
+    async function login(username, password){
+        const user = await store.query(TABLE, {email: username});
         if(!user.length) throw new Error("Información incorrecta");
-        console.log("1")
         return bcrypt.compare(password, user[0].password)
             .then(result => {
-                console.log("2")
                 if(result === true){
-                    console.log("3")
                     let response = {
                         id: user[0].id,
                         name: user[0].name,
@@ -25,13 +22,10 @@ module.exports = function(injectedStore) {
                         lastLogin: user[0].last_login,
                         loginAttemps: user[0].login_attempts
                     };
-                    console.log(response)
                     let jwt = auth.sign(response);
-                    console.log("jwt", jwt)
                     store.update(TABLE, {last_login: new Date(), login_attempts: 0}, {id: user[0].id});
                     return {...response, token: jwt};
                 }else{
-                    console.log("4")
                     //Se actualiza intentos de login
                     if(user[0])
                         store.update(TABLE, {login_attempts: user[0].login_attempts+1}, {id: user[0].id});
