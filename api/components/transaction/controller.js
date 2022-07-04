@@ -10,11 +10,15 @@ module.exports = function(injectedStore) {
     async function getTransactions(userId, walletId, year, month, categoryId){
         let query = "select t.id, t.wallet_id, w.name as wallet_name, t.date, t.amount, t.detail, c.id as category_id, c.name as category_name, c.type " +
             "from transaction t, category c, wallet w " +
-            "where t.wallet_id=w.id and t.category_id=c.id and w.user_id=? and t.wallet_id=? and year(t.date)=?";
-        let queryParameters = [userId, walletId, year];
-        if(month){
-            query += " and month(t.date)=?";
-            queryParameters.push(month);
+            "where t.wallet_id=w.id and t.category_id=c.id and w.user_id=? and t.wallet_id=?";
+        let queryParameters = [userId, walletId];
+        if(year){
+            query += " and year(t.date)=?";
+            queryParameters.push(year);
+            if(month){
+                query += " and month(t.date)=?";
+                queryParameters.push(month);
+            }
         }
         if(categoryId){
             query += " and c.id=?";
