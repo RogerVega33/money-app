@@ -9,6 +9,7 @@ const errorsNotDefined = require('../network/errorsNotDefined');
 const cors = require('cors');
 
 const wallet = require('./components/wallet/router');
+const category = require('./components/category/router');
 const transaction = require('./components/transaction/router');
 const auth = require('./components/auth/router');
 
@@ -21,6 +22,7 @@ app.use(loggerInterceptor);
 //ROUTES
 app.use('/api/auth', auth);
 app.use('/api/wallet', wallet);
+app.use('/api/category', category);
 app.use('/api/transaction', transaction);
 
 //ERROR HANDLING
