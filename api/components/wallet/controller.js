@@ -26,7 +26,18 @@ module.exports = function(injectedStore) {
         });
     }
 
+    async function saveWallet(userId, wallet){
+        const newWallet = {
+            name: wallet.name,
+            detail: wallet.detail || '',
+            user_id: userId,
+            starting_amount: wallet.startingAmount || 0
+        };
+        return store.insert(TABLE, newWallet);
+    }
+
     return{
         getWallets,
+        saveWallet,
     };
 };
