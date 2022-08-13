@@ -30,8 +30,14 @@ async function getHash(string, saltRounds = 10){
 }
 
 function roundDecimals(number, decimals = 2){
+    if(!number) number = 0;
     return number.toFixed(decimals);
 }
+
+function roundDecimalsGetNumber(number, decimals = 2){
+    return +roundDecimals(number, decimals);
+}
+
 
 module.exports = {
     generateRandomCode,
@@ -39,4 +45,5 @@ module.exports = {
     stringToDate,
     dateToString,
     roundDecimals,
+    roundDecimalsGetNumber,
 };

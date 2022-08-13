@@ -52,7 +52,40 @@ module.exports = function(injectedStore) {
         }
     }
 
+    async function getProfitLoss(userId, walletId, categoryId){
+        let query = "select DATE_FORMAT(t.date, '%Y-%m-01') as date, " +
+            "       sum(case when c.type = 'income' then t.amount else 0 end) income, " +
+            "       sum(case when c.type = 'expense' then t.amount else 0 end) expense, " +
+            "       sum(case when c.type = 'income' then t.amount else -t.amount end) savings, " +
+            "       w.starting_amount " +
+            " from transaction t, category c, wallet w " +
+            " where t.wallet_id = w.id and t.category_id = c.id and w.user_id = ? and w.id = ? ";
+        let queryParameters = [userId, walletId];
+        if(categoryId){
+            query += " and c.id= ? ";
+            queryParameters.push(categoryId);
+        }
+        query += " group by DATE_FORMAT(t.date, '%Y-%m-01') order by DATE_FORMAT(t.date, '%Y-%m-01')";
+        let results = await store.personalizedQuery(query, queryParameters);
+        const startingAmount = results.length > 0 && results[0].starting_amount? results[0].starting_amount : 0;
+        let acc = startingAmount;
+        let profitLoss = results
+            .map(r => ({...r, total: acc += r.savings}))
+            .map(r => ({
+                date: new Date(r.date),
+                income: utils.roundDecimalsGetNumber(r.income),
+                expense: utils.roundDecimalsGetNumber(r.expense),
+                savings: utils.roundDecimalsGetNumber(r.savings),
+                total: utils.roundDecimalsGetNumber(r.total),
+            }));
+        return{
+            startingAmount: utils.roundDecimalsGetNumber(startingAmount),
+            profitLoss,
+        }
+    }
+
     return{
         getTransactions,
+        getProfitLoss,
     };
 };

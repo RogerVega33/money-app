@@ -7,10 +7,19 @@ const secure = require('../../../auth/secure');
 
 //ROUTES
 router.get('/', secure(), getTransactions);
+router.get('/profitLoss', secure(), getProfitLoss);
 
 //FUNCTIONS
 function getTransactions(req, res, next) {
     controller.getTransactions(req.userId, req.query.walletId, req.query.year, req.query.month, req.query.categoryId)
+        .then(resultList => {
+            response.success(req, res, resultList, constants.http.ok);
+        })
+        .catch(next);
+}
+
+function getProfitLoss(req, res, next) {
+    controller.getProfitLoss(req.userId, req.query.walletId)
         .then(resultList => {
             response.success(req, res, resultList, constants.http.ok);
         })
