@@ -1,5 +1,7 @@
 const TABLE = 'transaction';
 const utils = require('../../../utils/utils');
+const error = require('../../../utils/errors');
+const constants = require('../../../utils/constants');
 
 module.exports = function(injectedStore) {
     let store = injectedStore;
@@ -8,9 +10,9 @@ module.exports = function(injectedStore) {
     }
 
     async function getTransactions(userId, walletId, year, month, categoryId){
-        let query = "select t.id, t.wallet_id, w.name as wallet_name, t.date, t.amount, t.detail, c.id as category_id, c.name as category_name, c.type " +
+        let query = "select t.id, w.id, w.name as wallet_name, t.date, t.amount, t.detail, c.id as category_id, c.name as category_name, c.type " +
             "from transaction t, category c, wallet w " +
-            "where t.wallet_id=w.id and t.category_id=c.id and w.user_id=? and t.wallet_id=?";
+            "where t.category_id=c.id and c.wallet_id=w.id and w.user_id=? and w.id=?";
         let queryParameters = [userId, walletId];
         if(year){
             query += " and year(t.date)=?";
@@ -59,7 +61,7 @@ module.exports = function(injectedStore) {
             "       sum(case when c.type = 'income' then t.amount else -t.amount end) savings, " +
             "       w.starting_amount " +
             " from transaction t, category c, wallet w " +
-            " where t.wallet_id = w.id and t.category_id = c.id and w.user_id = ? and w.id = ? ";
+            " where c.wallet_id = w.id and t.category_id = c.id and w.user_id = ? and w.id = ? ";
         let queryParameters = [userId, walletId];
         if(categoryId){
             query += " and c.id= ? ";
@@ -84,8 +86,26 @@ module.exports = function(injectedStore) {
         }
     }
 
+    async function saveTransaction(userId, transaction){
+        if(!transaction.date || !transaction.amount || !transaction.categoryId)
+            throw error('Bad request', constants.http.bad_request, false);
+        let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
+        let queryParameters = [userId, transaction.categoryId];
+        let result = await store.personalizedQuery(query, queryParameters);
+        if(result[0]){
+            return store.insert(TABLE, {
+                date: new Date(transaction.date),
+                amount: transaction.amount,
+                detail: transaction.detail,
+                category_id: transaction.categoryId
+            });
+        }
+        throw error('Bad request', constants.http.bad_request, false);
+    }
+
     return{
         getTransactions,
         getProfitLoss,
+        saveTransaction,
     };
 };

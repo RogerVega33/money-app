@@ -9,8 +9,8 @@ module.exports = function(injectedStore) {
 
     async function getWallets(userId){
         const query = "select id, name, starting_amount, " +
-            "(select ifnull(sum(amount), 0) from transaction where wallet_id=w.id AND category_id in (select id from category where wallet_id=w.id and type = 'income')) AS total_income, " +
-            "(select ifnull(sum(amount), 0) from transaction where wallet_id=w.id AND category_id in (select id from category where wallet_id=w.id and type = 'expense')) AS total_expense, " +
+            "(select ifnull(sum(amount), 0) from transaction where category_id in (select id from category c where c.wallet_id=w.id and type = 'income')) AS total_income, " +
+            "(select ifnull(sum(amount), 0) from transaction where category_id in (select id from category c where c.wallet_id=w.id and type = 'expense')) AS total_expense, " +
             "(select starting_amount + total_income - total_expense) as total " +
             "from wallet w where id in (select id from wallet where user_id = ?)";
         let results = await store.personalizedQuery(query, [userId]);
