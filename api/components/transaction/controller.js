@@ -54,6 +54,41 @@ module.exports = function(injectedStore) {
         }
     }
 
+    async function getCryptoWalletTransactions(userId, walletId) {
+
+        const wallet = await store.query('wallet', {id: walletId}, {user_id: userId});
+        if(wallet[0]) {
+            let transactions = await getCryptoTransactionsByWallet(wallet[0]);
+            const totalPortfolio = transactions.reduce((acc, item) => acc + parseFloat(item.total), 0);
+            return {
+                transactions,
+                totalIncome: utils.roundDecimals(totalPortfolio),
+                totalExpense: utils.roundDecimals(0),
+                savings: utils.roundDecimals(totalPortfolio)
+            }
+        }
+    }
+
+    async function getCryptoTransactionsByWallet(cryptoWallet) {
+        const queryTotalCryptoTransactions = `SELECT p.amount, p.symbol, IFNULL(c.price, 0) AS price,
+                (p.amount * IFNULL(c.price, 0)) AS total_value, c.updated_at
+                FROM portfolio p LEFT JOIN crypto c ON p.symbol = c.symbol WHERE p.wallet_id = ?`
+        let results = await store.personalizedQuery(queryTotalCryptoTransactions, [cryptoWallet.id]);
+        return results.map(result => {
+            return {
+                id: result.id,
+                walletId: result.wallet_id,
+                walletName: cryptoWallet.wallet_name,
+                date: result.updated_at,
+                amount: result.amount,
+                symbol: result.symbol,
+                price: result.price,
+                total: utils.roundDecimalsGetNumber(result.total_value),
+                type: cryptoWallet.type,
+            }
+        });
+    }
+
     async function getProfitLoss(userId, walletId, categoryId){
         let query = "select DATE_FORMAT(t.date, '%Y-%m-01') as date, " +
             "       sum(case when c.type = 'income' then t.amount else 0 end) income, " +
@@ -105,6 +140,8 @@ module.exports = function(injectedStore) {
 
     return{
         getTransactions,
+        getCryptoWalletTransactions,
+        getCryptoTransactionsByWallet,
         getProfitLoss,
         saveTransaction,
     };

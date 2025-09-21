@@ -7,11 +7,20 @@ const secure = require('../../../auth/secure');
 
 //ROUTES
 router.get('/', secure(), getTransactions);
+router.get('/crypto', secure(), getCryptoWalletTransactions);
 router.get('/profitLoss', secure(), getProfitLoss);
 router.post('/', secure(), saveTransaction)
 //FUNCTIONS
 function getTransactions(req, res, next) {
     controller.getTransactions(req.userId, req.query.walletId, req.query.year, req.query.month, req.query.categoryId)
+        .then(resultList => {
+            response.success(req, res, resultList, constants.http.ok);
+        })
+        .catch(next);
+}
+
+function getCryptoWalletTransactions(req, res, next) {
+    controller.getCryptoWalletTransactions(req.userId, req.query.walletId)
         .then(resultList => {
             response.success(req, res, resultList, constants.http.ok);
         })
