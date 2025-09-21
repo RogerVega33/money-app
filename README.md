@@ -30,6 +30,6 @@ Ejecutar:
 
 ```bash
 sudo docker build -t money-app .
-sudo docker run --publish 3000:3000 --env-file ./.env money-app
+sudo docker run -d --publish 3000:3000 --env-file ./.env money-app
 ```
 
