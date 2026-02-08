@@ -6,3 +6,5 @@ Dockerfile
 .gitignore
 tests
 coverage
+.env
+.env.*
