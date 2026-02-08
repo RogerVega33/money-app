@@ -29,7 +29,7 @@ Editar las variables de entorno en el archivo .env.
 Ejecutar:
 
 ```bash
-sudo docker build -t money-app .
-sudo docker run -d --publish 3000:3000 --env-file ./.env money-app
+docker build -t money-app .
+docker run -d --publish 3000:3000 --env-file ./.env money-app
 ```
 
