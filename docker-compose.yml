@@ -1,12 +1,24 @@
-version: '3'
+version: "3.8"
+
 services:
-  backend:
-    build: .
+  frontend:
+    image: money-app-web:latest
     restart: always
     ports:
-      - '3000:3000'
+      - "8085:80"
     environment:
-      - MYSQL_HOST=${MYSQL_HOST}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - BACKEND_URL=http://backend:3000
+    depends_on:
+      - backend
+
+  backend:
+    image: money-app:latest
+    restart: always
+    # Recomendación: NO publicar el puerto del backend hacia el host si solo lo consume el frontend.
+    # Si necesitas acceder al backend desde afuera para pruebas, descomenta ports.
+    # ports:
+    #   - "3000:3000"
+    expose:
+      - "3000"
+    env_file:
+      - .env
