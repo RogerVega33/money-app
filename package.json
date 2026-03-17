@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node api/index.js",
+    "watch": "nodemon api/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Roger Vega",
@@ -18,5 +19,8 @@
     "jsonwebtoken": "^9.0.3",
     "mysql": "^2.18.1",
     "swagger-ui-express": "^4.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
