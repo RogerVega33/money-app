@@ -33,3 +33,13 @@ docker build -t money-app .
 docker run -d --publish 3000:3000 --env-file ./.env money-app
 ```
 
+## CORS
+El backend utiliza un whitelist de orígenes permitidos para controlar el acceso mediante CORS cuando la variable de entorno API_ENV tiene un valor distinto a dev.
+
+Para configurar la lista se debe modificar la variable de entorno CORS_ORIGIN definiendo los orígenes permitidos separados por comas.
+
+Ejemplo:
+
+```bash
+CORS_ORIGIN=http://localhost:8080,https://miapp.com,https://admin.miapp.com
+```

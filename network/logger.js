@@ -54,6 +54,7 @@ function replaceSensitiveInformation(log){
 }
 
 module.exports = {
+    getCurrentTime,
     writeRequest,
     writeResponse
 };
