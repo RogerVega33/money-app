@@ -30,7 +30,7 @@ const check = {
 
 function getToken(bearerString){
     if(!bearerString || !bearerString.startsWith('Bearer ')){
-        throw error('Error en el token de autenticación', constants.http.bad_request, false);
+        throw error('Error en el token de autenticación', constants.http.unauthorized, false);
     }
     return bearerString.slice(7);
 }

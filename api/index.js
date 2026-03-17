@@ -6,6 +6,7 @@ const loggerInterceptor = require('../network/loggerInterceptor');
 const errors = require('../network/errors');
 const errorsNotDefined = require('../network/errorsNotDefined');
 //const swaggerDoc = require('../swagger.json');
+const helmet = require('helmet');
 const corsMiddleware = require('../network/corsMiddleware');
 
 const wallet = require('./components/wallet/router');
@@ -14,12 +15,16 @@ const transaction = require('./components/transaction/router');
 const auth = require('./components/auth/router');
 
 const app = express();
-app.use(compression());
+
+app.use(helmet({
+   contentSecurityPolicy: false,
+}));
 
 //CORS
 app.use(corsMiddleware());
 app.options('*', corsMiddleware());
 
+app.use(compression());
 app.use(express.json());
 app.use(loggerInterceptor);
 
