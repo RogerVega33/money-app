@@ -7,14 +7,19 @@ const secret = config.jwt.secret;
 
 function decodedToken(token){
     try{
-        return jwt.verify(token, secret);
+        return jwt.verify(token, secret, {
+            algorithms: ['HS256']
+        });
     }catch(err){
         throw error('Forbidden', constants.http.forbidden, false);
     }
 }
 
 function sign(data){
-    return jwt.sign(data, secret, {expiresIn: "1d"});
+    return jwt.sign(data, secret, {
+        expiresIn: "1d",
+        algorithm: "HS256"
+    });
 }
 
 const check = {
@@ -24,10 +29,10 @@ const check = {
 };
 
 function getToken(bearerString){
-    if(!bearerString || bearerString.indexOf('Bearer') === -1){
+    if(!bearerString || !bearerString.startsWith('Bearer ')){
         throw error('Error en el token de autenticación', constants.http.bad_request, false);
     }
-    return bearerString.replace('Bearer ', '');
+    return bearerString.slice(7);
 }
 
 function decodeHeader(req){
