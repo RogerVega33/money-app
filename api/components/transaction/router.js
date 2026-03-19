@@ -10,6 +10,8 @@ router.get('/', secure(), getTransactions);
 router.get('/crypto', secure(), getCryptoWalletTransactions);
 router.get('/profitLoss', secure(), getProfitLoss);
 router.post('/', secure(), saveTransaction)
+router.post('/crypto', secure(), saveCriptoTransaction)
+
 //FUNCTIONS
 function getTransactions(req, res, next) {
     controller.getTransactions(req.userId, req.query.walletId, req.query.year, req.query.month, req.query.categoryId)
@@ -39,6 +41,14 @@ function saveTransaction(req, res, next) {
     controller.saveTransaction(req.userId, req.body)
         .then(result => {
             response.success(req, res, result, constants.http.ok);
+        })
+        .catch(next);
+}
+
+function saveCriptoTransaction(req, res, next) {
+    controller.saveCriptoTransaction(req.userId, req.body)
+        .then(result => {
+            response.success(req, res, {}, result);
         })
         .catch(next);
 }

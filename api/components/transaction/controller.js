@@ -138,11 +138,40 @@ module.exports = function(injectedStore) {
         throw error('Bad request', constants.http.bad_request, false);
     }
 
+    async function saveCriptoTransaction(userId, transaction){
+        if(!transaction.walletId || !transaction.symbol || !transaction.amount)
+            throw error('Bad request', constants.http.bad_request, false);
+
+        transaction.symbol = transaction.symbol.toUpperCase();
+
+        // Primero verifica si la wallet existe y es del usuario
+        const wallet = await store.query('wallet', {id: transaction.walletId}, {user_id: userId});
+
+        if(wallet[0]) {
+            // verifica si ya existe un registro con ese symbol para actualizar su monto
+            const portfolioTransaction = await store.query('portfolio', {wallet_id: transaction.walletId}, {symbol: transaction.symbol})
+            if(portfolioTransaction[0]){
+                const newAmount = transaction.amount + portfolioTransaction[0].amount;
+                await store.update('portfolio', {amount: newAmount}, {id: portfolioTransaction[0].id});
+                return constants.http.ok;
+            }
+            // ingresa un nuevo registro
+            await store.insert('portfolio', {
+                wallet_id: transaction.walletId,
+                symbol: transaction.symbol,
+                amount: transaction.amount,
+            });
+            return constants.http.created;
+        }
+        throw error('Not found', constants.http.not_found, false);
+    }
+
     return{
         getTransactions,
         getCryptoWalletTransactions,
         getCryptoTransactionsByWallet,
         getProfitLoss,
         saveTransaction,
+        saveCriptoTransaction,
     };
 };
