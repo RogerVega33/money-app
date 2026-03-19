@@ -13,7 +13,7 @@ module.exports = function(injectedStore) {
     async function getWallets(userId){
         let wallets;
 
-        const query = "select id, name, starting_amount, type, " +
+        const query = "select id, name, starting_amount, detail, type, " +
             "(select ifnull(sum(amount), 0) from transaction where category_id in (select id from category c where c.wallet_id=w.id and type = 'income')) AS total_income, " +
             "(select ifnull(sum(amount), 0) from transaction where category_id in (select id from category c where c.wallet_id=w.id and type = 'expense')) AS total_expense, " +
             "(select starting_amount + total_income - total_expense) as total " +
@@ -27,12 +27,13 @@ module.exports = function(injectedStore) {
                 totalIncome: utils.roundDecimals(wallet.total_income),
                 totalExpense: utils.roundDecimals(wallet.total_expense),
                 total: utils.roundDecimals(wallet.total),
+                detail: wallet.detail,
                 type: wallet.type,
             }
         });
 
         // Obtengo las crypto wallets del usuario
-        const queryCryptoWallets = "select id, name, starting_amount, type " +
+        const queryCryptoWallets = "select id, name, starting_amount, detail, type " +
             "from wallet w where id in (select id from wallet where user_id = ?) and type = 'crypto'";
         let cryptoWallets = await store.personalizedQuery(queryCryptoWallets, [userId]);
         console.info("Cripto wallets", cryptoWallets)
@@ -65,6 +66,7 @@ module.exports = function(injectedStore) {
                     totalIncome: utils.roundDecimals(totalPortfolio),
                     totalExpense: 0,
                     total: utils.roundDecimals(totalPortfolio),
+                    detail: cw.detail,
                     type: cw.type,
                 });
             }
@@ -78,7 +80,8 @@ module.exports = function(injectedStore) {
             name: wallet.name,
             detail: wallet.detail || '',
             user_id: userId,
-            starting_amount: wallet.startingAmount || 0
+            starting_amount: wallet.startingAmount || 0,
+            type: wallet.type || 'fiat',
         };
         return store.insert(TABLE, newWallet);
     }
