@@ -11,6 +11,8 @@ router.get('/crypto', secure(), getCryptoWalletTransactions);
 router.get('/profitLoss', secure(), getProfitLoss);
 router.post('/', secure(), saveTransaction)
 router.post('/crypto', secure(), saveCriptoTransaction)
+router.put('/crypto', secure(), updateCriptoTransaction)
+router.delete('/crypto', secure(), deleteCriptoTransaction)
 
 //FUNCTIONS
 function getTransactions(req, res, next) {
@@ -53,4 +55,19 @@ function saveCriptoTransaction(req, res, next) {
         .catch(next);
 }
 
+function updateCriptoTransaction(req, res, next) {
+    controller.updateCriptoTransaction(req.userId, req.body)
+        .then(result => {
+            response.success(req, res, {}, result);
+        })
+        .catch(next);
+}
+
+function deleteCriptoTransaction(req, res, next) {
+    controller.deleteCriptoTransaction(req.userId, req.query.transactionId)
+        .then(resultList => {
+            response.success(req, res, resultList, constants.http.ok);
+        })
+        .catch(next);
+}
 module.exports = router;

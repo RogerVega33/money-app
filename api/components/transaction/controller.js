@@ -70,7 +70,7 @@ module.exports = function(injectedStore) {
     }
 
     async function getCryptoTransactionsByWallet(cryptoWallet) {
-        const queryTotalCryptoTransactions = `SELECT p.amount, p.symbol, IFNULL(c.price, 0) AS price,
+        const queryTotalCryptoTransactions = `SELECT p.id, p.amount, p.symbol, IFNULL(c.price, 0) AS price,
                 (p.amount * IFNULL(c.price, 0)) AS total_value, c.updated_at
                 FROM portfolio p LEFT JOIN crypto c ON p.symbol = c.symbol WHERE p.wallet_id = ?`
         let results = await store.personalizedQuery(queryTotalCryptoTransactions, [cryptoWallet.id]);
@@ -166,6 +166,40 @@ module.exports = function(injectedStore) {
         throw error('Not found', constants.http.not_found, false);
     }
 
+    async function updateCriptoTransaction(userId, transaction){
+        if(!transaction.id || !transaction.symbol || !transaction.amount)
+            throw error('Bad request', constants.http.bad_request, false);
+
+        // Primero verifica que la transacción existe
+        const cryptoTransaction = await store.query('portfolio', {id: transaction.id}, {symbol: transaction.symbol});
+        if(cryptoTransaction[0]) {
+            // valida que la wallet sea del usuario
+            const wallet = await store.query('wallet', {id: cryptoTransaction[0].wallet_id}, {user_id: userId});
+            if(wallet[0]) {
+                await store.update('portfolio', {amount: transaction.amount}, {id: transaction.id});
+                return constants.http.ok;
+            }
+        }
+        throw error('Not found', constants.http.not_found, false);
+    }
+
+    async function deleteCriptoTransaction(userId, transactionId){
+        if(!transactionId)
+            throw error('Bad request', constants.http.bad_request, false);
+
+        // Primero verifica que la transacción existe
+        const cryptoTransaction = await store.query('portfolio', {id: transactionId});
+        if(cryptoTransaction[0]) {
+            // valida que la wallet sea del usuario
+            const wallet = await store.query('wallet', {id: cryptoTransaction[0].wallet_id}, {user_id: userId});
+            if(wallet[0]) {
+                await store.deleteData('portfolio', {id: transactionId});
+                return constants.http.ok;
+            }
+        }
+        throw error('Not found', constants.http.not_found, false);
+    }
+
     return{
         getTransactions,
         getCryptoWalletTransactions,
@@ -173,5 +207,7 @@ module.exports = function(injectedStore) {
         getProfitLoss,
         saveTransaction,
         saveCriptoTransaction,
+        updateCriptoTransaction,
+        deleteCriptoTransaction,
     };
 };
