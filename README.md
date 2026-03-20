@@ -5,7 +5,7 @@ Money app te ayuda a llevar un registro de tus gastos
 ## Installation
 
 ### Node
-Editar las variables de entorno en el archivo config.js.
+Editar las variables de entorno en el archivo .env (o crearlo en caso de que no exista). El archivo .env.example sirve de guía.
 
 Ejecutar:
 
