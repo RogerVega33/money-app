@@ -7,12 +7,14 @@ const secure = require('../../../auth/secure');
 
 //ROUTES
 router.get('/', secure(), getTransactions);
-router.get('/crypto', secure(), getCryptoWalletTransactions);
+router.post('/', secure(), saveTransaction);
+router.put('/', secure(), updateTransaction);
+router.delete('/', secure(), deleteTransaction);
 router.get('/profitLoss', secure(), getProfitLoss);
-router.post('/', secure(), saveTransaction)
-router.post('/crypto', secure(), saveCriptoTransaction)
-router.put('/crypto', secure(), updateCriptoTransaction)
-router.delete('/crypto', secure(), deleteCriptoTransaction)
+router.get('/crypto', secure(), getCryptoWalletTransactions);
+router.post('/crypto', secure(), saveCriptoTransaction);
+router.put('/crypto', secure(), updateCriptoTransaction);
+router.delete('/crypto', secure(), deleteCriptoTransaction);
 
 //FUNCTIONS
 function getTransactions(req, res, next) {
@@ -63,6 +65,14 @@ function updateCriptoTransaction(req, res, next) {
         .catch(next);
 }
 
+function updateTransaction(req, res, next) {
+    controller.updateTransaction(req.userId, req.body)
+        .then(result => {
+            response.success(req, res, {}, result);
+        })
+        .catch(next);
+}
+
 function deleteCriptoTransaction(req, res, next) {
     controller.deleteCriptoTransaction(req.userId, req.query.transactionId)
         .then(resultList => {
@@ -70,4 +80,13 @@ function deleteCriptoTransaction(req, res, next) {
         })
         .catch(next);
 }
+
+function deleteTransaction(req, res, next) {
+    controller.deleteTransaction(req.userId, req.query.transactionId)
+        .then(resultList => {
+            response.success(req, res, resultList, constants.http.ok);
+        })
+        .catch(next);
+}
+
 module.exports = router;

@@ -10,7 +10,7 @@ module.exports = function(injectedStore) {
     }
 
     async function getTransactions(userId, walletId, year, month, categoryId){
-        let query = "select t.id, w.id, w.name as wallet_name, t.date, t.amount, t.detail, c.id as category_id, c.name as category_name, c.type " +
+        let query = "select t.id, w.id as wallet_id, w.name as wallet_name, t.date, t.amount, t.detail, c.id as category_id, c.name as category_name, c.type " +
             "from transaction t, category c, wallet w " +
             "where t.category_id=c.id and c.wallet_id=w.id and w.user_id=? and w.id=?";
         let queryParameters = [userId, walletId];
@@ -183,6 +183,33 @@ module.exports = function(injectedStore) {
         throw error('Not found', constants.http.not_found, false);
     }
 
+    async function updateTransaction(userId, transaction){
+        if(!transaction.id || !transaction.categoryId || !transaction.amount ||  !transaction.date)
+            throw error('Bad request', constants.http.bad_request, false);
+
+        // Primero verifica que la transacción existe
+        const transactionOriginal = await store.query(TABLE, {id: transaction.id});
+        console.log("---> transactionOriginal", transactionOriginal)
+        if(transactionOriginal[0]) {
+            // valida que la wallet sea del usuario
+            let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
+            let queryParameters = [userId, transactionOriginal[0].category_id];
+            let result = await store.personalizedQuery(query, queryParameters);
+            // Validar que si hay una nueva categoría también es del usuario
+            console.log("---> transaction", transaction)
+            if(result[0]) {
+                await store.update(TABLE, {
+                    amount: transaction.amount,
+                    detail: transaction.detail,
+                    category_id: transaction.categoryId,
+                    date: new Date(transaction.date),
+                }, {id: transaction.id});
+                return constants.http.ok;
+            }
+        }
+        throw error('Not found', constants.http.not_found, false);
+    }
+
     async function deleteCriptoTransaction(userId, transactionId){
         if(!transactionId)
             throw error('Bad request', constants.http.bad_request, false);
@@ -200,6 +227,25 @@ module.exports = function(injectedStore) {
         throw error('Not found', constants.http.not_found, false);
     }
 
+    async function deleteTransaction(userId, transactionId){
+        if(!transactionId)
+            throw error('Bad request', constants.http.bad_request, false);
+
+        // Primero verifica que la transacción existe
+        const transaction = await store.query(TABLE, {id: transactionId});
+        if(transaction[0]) {
+            // valida que la wallet sea del usuario
+            let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
+            let queryParameters = [userId, transaction[0].category_id];
+            let result = await store.personalizedQuery(query, queryParameters);
+            if(result[0]) {
+                await store.deleteData(TABLE, {id: transactionId});
+                return constants.http.ok;
+            }
+        }
+        throw error('Not found', constants.http.not_found, false);
+    }
+
     return{
         getTransactions,
         getCryptoWalletTransactions,
@@ -209,5 +255,7 @@ module.exports = function(injectedStore) {
         saveCriptoTransaction,
         updateCriptoTransaction,
         deleteCriptoTransaction,
+        deleteTransaction,
+        updateTransaction,
     };
 };
