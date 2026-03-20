@@ -12,5 +12,8 @@ module.exports = {
         port: process.env.MYSQL_PORT || 3306,
         password: process.env.MYSQL_PASSWORD || 'password',
         database: process.env.MYSQL_DATABASE || 'database',
+    },
+    crypto: {
+        cacheMinutes: process.env.CRYPTO_CACHE_MINUTES || 5,
     }
 };

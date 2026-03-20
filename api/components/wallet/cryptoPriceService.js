@@ -1,6 +1,7 @@
 const axios = require("axios");
+const config = require('../../../config.js');
 
-const cachedTime = 5 * 60 * 1000; // 5 min
+const cachedTime = config.crypto.cacheMinutes  * 60 * 1000;
 
 module.exports = function(store) {
     async function refreshStalePrices(symbolList) {

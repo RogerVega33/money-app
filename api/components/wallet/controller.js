@@ -36,7 +36,6 @@ module.exports = function(injectedStore) {
         const queryCryptoWallets = "select id, name, starting_amount, detail, type " +
             "from wallet w where id in (select id from wallet where user_id = ?) and type = 'crypto'";
         let cryptoWallets = await store.personalizedQuery(queryCryptoWallets, [userId]);
-        console.info("Cripto wallets", cryptoWallets)
 
         // si tiene crypto wallets entonces consulta su portafolio
         if(cryptoWallets[0]){
