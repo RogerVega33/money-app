@@ -1,7 +1,16 @@
 const auth = require('../../../auth');
 const bcrypt = require('bcryptjs');
 const utils = require('../../../utils/utils');
+const error = require("../../../utils/errors");
+const constants = require("../../../utils/constants");
 const TABLE = 'user';
+const {
+    generateRecoveryPhrase,
+    hashRecoveryPhrase,
+    verifyRecoveryPhrase
+} = require('../../../auth/recoveryPhrase');
+
+const RECOVERY_PHRASE_WORDS = 6;
 
 module.exports = function(injectedStore) {
     let store = injectedStore;
@@ -9,33 +18,61 @@ module.exports = function(injectedStore) {
         store = require('../../../store/mysql');
     }
 
-    async function login(username, password){
-        const user = await store.query(TABLE, {email: username});
-        if(!user.length) throw new Error("Información incorrecta");
-        return bcrypt.compare(password, user[0].password)
-            .then(result => {
-                if(result === true){
-                    let response = {
-                        id: user[0].id,
-                        name: user[0].name,
-                        email: user[0].email,
-                        lastLogin: user[0].last_login,
-                        loginAttemps: user[0].login_attempts
-                    };
-                    let jwt = auth.sign(response);
-                    store.update(TABLE, {last_login: new Date(), login_attempts: 0}, {id: user[0].id});
-                    return {...response, token: jwt};
-                }else{
-                    //Se actualiza intentos de login
-                    if(user[0])
-                        store.update(TABLE, {login_attempts: user[0].login_attempts+1}, {id: user[0].id});
-                    throw new Error("Información incorrecta");
-                }
-            });
+    async function createUser(username, password){
+        if (!username || !password)
+            throw error('Bad request', constants.http.bad_request, false);
+
+        // Valida que el usuario no exista
+        const userExist = await store.query(TABLE, { username: username });
+        if (userExist[0]) throw error('Usuario ya existe', constants.http.conflict, false);
+
+        const passwordHash = await utils.getHash(password);
+
+        const recoveryPhrase = generateRecoveryPhrase(RECOVERY_PHRASE_WORDS);
+        const recoveryPhraseHash = await hashRecoveryPhrase(recoveryPhrase);
+
+        await store.insert(TABLE, { username: username, name: username, password: passwordHash, recovery_phrase: recoveryPhraseHash });
+
+        const user = await store.query(TABLE, { username: username });
+        if(user[0]) {
+            const response = {
+                id: user[0].id,
+                name: user[0].name,
+                username: user[0].username,
+                lastLogin: user[0].last_login,
+                loginAttemps: user[0].login_attempts
+            };
+            return { ...response, recoveryPhrase };
+        }
+        throw error('Ocurrió un error al crear el usuario', constants.http.not_found, false);
     }
 
-    async function changePassword(email, oldPassword, newPassword){
-        const user = await store.query(TABLE, {email: email});
+    async function login(username, password) {
+        const user = await store.query(TABLE, { username: username });
+        if (!user.length) throw new Error("Información incorrecta");
+
+        const match = await bcrypt.compare(password, user[0].password);
+
+        if (!match) {
+            await store.update(TABLE, { login_attempts: user[0].login_attempts + 1 }, { id: user[0].id });
+            throw new Error("Información incorrecta");
+        }
+
+        const response = {
+            id: user[0].id,
+            name: user[0].name,
+            username: user[0].username,
+            lastLogin: user[0].last_login,
+            loginAttemps: user[0].login_attempts
+        };
+
+        await store.update(TABLE, { last_login: new Date(), login_attempts: 0 }, { id: user[0].id });
+
+        return { ...response, token: auth.sign(response) };
+    }
+
+    async function changePassword(username, oldPassword, newPassword){
+        const user = await store.query(TABLE, {username: username});
         let newPasswordHash = await utils.getHash(newPassword);
         return bcrypt.compare(oldPassword, user[0].password)
             .then(result => {
@@ -58,6 +95,7 @@ module.exports = function(injectedStore) {
         login,
         changePassword,
         getHash,
+        createUser,
     }
 
 };

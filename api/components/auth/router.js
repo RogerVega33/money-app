@@ -9,7 +9,19 @@ const secure = require('../../../auth/secure');
 //ROUTES
 router.post('/login', login);
 router.post('/password/change', changePassword);
+router.post('/user', createUser);
+
 if(config.api.env === 'dev') router.post('/hash', secure(), getHash);
+
+function createUser(req, res) {
+    controller.createUser(req.body.username, req.body.password)
+        .then(body => {
+            response.success(req, res, body, constants.http.ok);
+        })
+        .catch( error => {
+            response.error(req, res, error.message, constants.http.bad_request);
+        });
+}
 
 function login(req, res){
     controller.login(req.body.username, req.body.password)
@@ -22,7 +34,7 @@ function login(req, res){
 }
 
 function changePassword(req, res){
-    controller.changePassword(req.body.email, req.body.oldPassword, req.body.newPassword)
+    controller.changePassword(req.body.username, req.body.oldPassword, req.body.newPassword)
         .then(body => {
             response.success(req, res, body, constants.http.ok);
         })
