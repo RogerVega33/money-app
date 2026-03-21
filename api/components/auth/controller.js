@@ -47,6 +47,22 @@ module.exports = function(injectedStore) {
         throw error('Ocurrió un error al crear el usuario', constants.http.not_found, false);
     }
 
+    async function recoverUser(body){
+        if (!body.username || !body.newPassword || !body.recoveryPhrase)
+            throw error('Bad request', constants.http.bad_request, false);
+
+        // Valida que el usuario exista
+        const user = await store.query(TABLE, { username: body.username });
+        const valid = user[0] && await verifyRecoveryPhrase(body.recoveryPhrase, user[0].recovery_phrase);
+
+        if(!valid) throw new Error("Información incorrecta");
+
+        const newPasswordHash = await utils.getHash(body.newPassword);
+        await store.update(TABLE, { password: newPasswordHash }, { id: user[0].id });
+
+        return { message: 'Contraseña actualizada correctamente' };
+    }
+
     async function login(username, password) {
         const user = await store.query(TABLE, { username: username });
         if (!user.length) throw new Error("Información incorrecta");
@@ -71,19 +87,17 @@ module.exports = function(injectedStore) {
         return { ...response, token: auth.sign(response) };
     }
 
-    async function changePassword(username, oldPassword, newPassword){
-        const user = await store.query(TABLE, {username: username});
-        let newPasswordHash = await utils.getHash(newPassword);
-        return bcrypt.compare(oldPassword, user[0].password)
-            .then(result => {
-                if(result === true){
-                    store.update(TABLE, {password: newPasswordHash}, {id: user[0].id});
-                    return {
-                        message:'Contraseña actualizada correctamente'
-                    };
-                }
-                throw new Error();
-            });
+    async function changePassword(username, oldPassword, newPassword) {
+        const user = await store.query(TABLE, { username });
+        if (!user.length) throw error('Datos incorrectos', constants.http.not_found, false);
+
+        const match = await bcrypt.compare(oldPassword, user[0].password);
+        if (!match) throw error('Datos incorrectos', constants.http.not_found, false);
+
+        const newPasswordHash = await utils.getHash(newPassword);
+        await store.update(TABLE, { password: newPasswordHash }, { id: user[0].id });
+
+        return { message: 'Contraseña actualizada correctamente' };
     }
 
     async function getHash(text){
@@ -96,6 +110,7 @@ module.exports = function(injectedStore) {
         changePassword,
         getHash,
         createUser,
+        recoverUser,
     }
 
 };

@@ -10,11 +10,22 @@ const secure = require('../../../auth/secure');
 router.post('/login', login);
 router.post('/password/change', changePassword);
 router.post('/user', createUser);
+router.post('/user/recoverUser', recoverUser);
 
 if(config.api.env === 'dev') router.post('/hash', secure(), getHash);
 
 function createUser(req, res) {
     controller.createUser(req.body.username, req.body.password)
+        .then(body => {
+            response.success(req, res, body, constants.http.ok);
+        })
+        .catch( error => {
+            response.error(req, res, error.message, constants.http.bad_request);
+        });
+}
+
+function recoverUser(req, res) {
+    controller.recoverUser(req.body)
         .then(body => {
             response.success(req, res, body, constants.http.ok);
         })
