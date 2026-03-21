@@ -75,6 +75,8 @@ module.exports = function(injectedStore) {
     }
 
     async function saveWallet(userId, wallet){
+        if (wallet.type === 'crypto') {wallet.startingAmount = 0}
+
         const newWallet = {
             name: wallet.name,
             detail: wallet.detail || '',
