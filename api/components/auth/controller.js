@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const utils = require('../../../utils/utils');
 const error = require("../../../utils/errors");
 const constants = require("../../../utils/constants");
+const { validatePassword, validateUserCredentials } = require('../../../utils/userValidator')
+
 const TABLE = 'user';
 const {
     generateRecoveryPhrase,
@@ -19,8 +21,9 @@ module.exports = function(injectedStore) {
     }
 
     async function createUser(username, password){
-        if (!username || !password)
-            throw error('Bad request', constants.http.bad_request, false);
+        const { hasErrors, message } = validateUserCredentials(username, password)
+        if (hasErrors)
+            throw error(message, constants.http.bad_request, false)
 
         // Valida que el usuario no exista
         const userExist = await store.query(TABLE, { username: username });
@@ -50,6 +53,10 @@ module.exports = function(injectedStore) {
     async function recoverUser(body){
         if (!body.username || !body.newPassword || !body.recoveryPhrase)
             throw error('Bad request', constants.http.bad_request, false);
+
+        const passwordErrors = validatePassword(body.newPassword)
+        if (passwordErrors.length > 0)
+            throw error(passwordErrors.join(' '), constants.http.bad_request, false)
 
         // Valida que el usuario exista
         const user = await store.query(TABLE, { username: body.username });
@@ -88,6 +95,10 @@ module.exports = function(injectedStore) {
     }
 
     async function changePassword(username, oldPassword, newPassword) {
+        const passwordErrors = validatePassword(newPassword)
+        if (passwordErrors.length > 0)
+            throw error(passwordErrors.join(' '), constants.http.bad_request, false)
+
         const user = await store.query(TABLE, { username });
         if (!user.length) throw error('Datos incorrectos', constants.http.not_found, false);
 
