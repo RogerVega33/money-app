@@ -109,7 +109,7 @@ module.exports = function(injectedStore) {
         let profitLoss = results
             .map(r => ({...r, total: acc += r.savings}))
             .map(r => ({
-                date: new Date(r.date),
+                date: r.date,
                 income: utils.roundDecimalsGetNumber(r.income),
                 expense: utils.roundDecimalsGetNumber(r.expense),
                 savings: utils.roundDecimalsGetNumber(r.savings),
@@ -129,7 +129,7 @@ module.exports = function(injectedStore) {
         let result = await store.personalizedQuery(query, queryParameters);
         if(result[0]){
             return store.insert(TABLE, {
-                date: new Date(transaction.date),
+                date: transaction.date,
                 amount: transaction.amount,
                 detail: transaction.detail,
                 category_id: transaction.categoryId
@@ -189,20 +189,18 @@ module.exports = function(injectedStore) {
 
         // Primero verifica que la transacción existe
         const transactionOriginal = await store.query(TABLE, {id: transaction.id});
-        console.log("---> transactionOriginal", transactionOriginal)
         if(transactionOriginal[0]) {
             // valida que la wallet sea del usuario
             let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
             let queryParameters = [userId, transactionOriginal[0].category_id];
             let result = await store.personalizedQuery(query, queryParameters);
             // Validar que si hay una nueva categoría también es del usuario
-            console.log("---> transaction", transaction)
             if(result[0]) {
                 await store.update(TABLE, {
                     amount: transaction.amount,
                     detail: transaction.detail,
                     category_id: transaction.categoryId,
-                    date: new Date(transaction.date),
+                    date: transaction.date,
                 }, {id: transaction.id});
                 return constants.http.ok;
             }
