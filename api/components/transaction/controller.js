@@ -37,7 +37,7 @@ module.exports = function(injectedStore) {
                 id: transaction.id,
                 walletId: transaction.wallet_id,
                 walletName: transaction.wallet_name,
-                date: transaction.date,
+                date: transaction.date.split('T')[0],
                 amount: transaction.amount,
                 detail: transaction.detail,
                 categoryId: transaction.category_id,
