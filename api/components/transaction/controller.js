@@ -194,8 +194,10 @@ module.exports = function(injectedStore) {
             let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
             let queryParameters = [userId, transactionOriginal[0].category_id];
             let result = await store.personalizedQuery(query, queryParameters);
-            // Validar que si hay una nueva categoría también es del usuario
             if(result[0]) {
+                const destinationCategory = await store.personalizedQuery(query, [userId, transaction.categoryId]);
+                if (!destinationCategory[0]) throw error('Not found', constants.http.not_found, false);
+
                 await store.update(TABLE, {
                     amount: transaction.amount,
                     detail: transaction.detail,

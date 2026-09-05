@@ -1,5 +1,6 @@
 const TABLE = 'category';
-const utils = require('../../../utils/utils');
+const error = require('../../../utils/errors');
+const constants = require('../../../utils/constants');
 
 module.exports = function(injectedStore) {
     let store = injectedStore;
@@ -32,6 +33,10 @@ module.exports = function(injectedStore) {
             }
             return null;
         }
+        // Verifica la pertenencia de la billetera de destino.
+        const wallet = await store.query('wallet', {id: category.walletId}, {user_id: userId});
+        if (!wallet[0]) throw error('Not found', constants.http.not_found, false);
+
         // Nuevo registro - verifica que no haya duplicados
         let query = "select c.* from category c, wallet w " +
             " where c.wallet_id = w.id and w.user_id = ? and c.type = ? and c.name = ? and w.id = ?";
@@ -39,13 +44,11 @@ module.exports = function(injectedStore) {
 
         if(results[0]) return null;
 
-        let wallet = await store.query('wallet', {user_id: userId});
-        if(wallet[0]) return store.insert(TABLE, {
+        return store.insert(TABLE, {
             name: category.name,
             type: category.type,
             wallet_id: category.walletId
         });
-        return null;
     }
 
     return{
