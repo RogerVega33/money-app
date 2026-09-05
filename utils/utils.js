@@ -25,7 +25,7 @@ function dateToString(date, separator) {
     return day + separator + month + separator + year;
 }
 
-async function getHash(string, saltRounds = 10){
+async function getHash(string, saltRounds = 12){
     return await bcrypt.hash(string, saltRounds);
 }
 
