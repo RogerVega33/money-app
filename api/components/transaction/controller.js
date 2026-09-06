@@ -3,12 +3,14 @@ const TABLE = 'transaction';
 const utils = require('../../../utils/utils');
 const error = require('../../../utils/errors');
 const constants = require('../../../utils/constants');
+const cryptoPriceService = require('../wallet/cryptoPriceService');
 
 module.exports = function(injectedStore) {
     let store = injectedStore;
     if(!store){
         store = require('../../../store/mysql');
     }
+    const cryptoPrice = cryptoPriceService(store);
 
     async function getTransactions(userId, walletId, year, month, categoryId){
         walletId = validate.integer(walletId, 'La billetera');
@@ -67,6 +69,10 @@ module.exports = function(injectedStore) {
 
         const wallet = await store.query('wallet', {id: walletId}, {user_id: userId});
         if(wallet[0]) {
+            const portfolio = await store.query('portfolio', {wallet_id: walletId});
+            const symbols = [...new Set(portfolio.map(item => item.symbol))];
+            await cryptoPrice.refreshStalePrices(symbols);
+
             let transactions = await getCryptoTransactionsByWallet(wallet[0]);
             const totalPortfolio = transactions.reduce((acc, item) => acc + parseFloat(item.total), 0);
             return {
