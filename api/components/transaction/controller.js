@@ -92,8 +92,8 @@ module.exports = function(injectedStore) {
         return results.map(result => {
             return {
                 id: result.id,
-                walletId: result.wallet_id,
-                walletName: cryptoWallet.wallet_name,
+                walletId: cryptoWallet.id,
+                walletName: cryptoWallet.name,
                 date: result.updated_at,
                 amount: result.amount,
                 exactAmount: result.exact_amount,
