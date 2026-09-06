@@ -30,6 +30,14 @@ app.use(compression());
 app.use(express.json());
 app.use(loggerInterceptor);
 
+// TEMPORAL: simular una conexión lenta para probar los estados de carga.
+// Eliminar este middleware al terminar las pruebas.
+/*
+app.use('/api', (req, res, next) => {
+   setTimeout(next, 4000);
+});
+*/
+
 //ROUTES
 app.use('/api/auth', auth);
 app.use('/api/wallet', wallet);

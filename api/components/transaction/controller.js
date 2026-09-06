@@ -1,3 +1,4 @@
+const validate = require('../../../utils/dataValidation');
 const TABLE = 'transaction';
 const utils = require('../../../utils/utils');
 const error = require('../../../utils/errors');
@@ -10,6 +11,13 @@ module.exports = function(injectedStore) {
     }
 
     async function getTransactions(userId, walletId, year, month, categoryId){
+        walletId = validate.integer(walletId, 'La billetera');
+        if (categoryId !== undefined) categoryId = validate.integer(categoryId, 'La categoría');
+        if (year !== undefined) year = validate.integer(year, 'El año', 1000, 9999);
+        if (month !== undefined) {
+            month = validate.integer(month, 'El mes', 1, 12);
+            if (year === undefined) throw error('El mes requiere un año.', 400, false);
+        }
         let query = "select t.id, w.id as wallet_id, w.name as wallet_name, t.date, t.amount, t.detail, c.id as category_id, c.name as category_name, c.type " +
             "from transaction t, category c, wallet w " +
             "where t.category_id=c.id and c.wallet_id=w.id and w.user_id=? and w.id=?";
@@ -55,6 +63,7 @@ module.exports = function(injectedStore) {
     }
 
     async function getCryptoWalletTransactions(userId, walletId) {
+        walletId = validate.integer(walletId, 'La billetera');
 
         const wallet = await store.query('wallet', {id: walletId}, {user_id: userId});
         if(wallet[0]) {
@@ -70,7 +79,7 @@ module.exports = function(injectedStore) {
     }
 
     async function getCryptoTransactionsByWallet(cryptoWallet) {
-        const queryTotalCryptoTransactions = `SELECT p.id, p.amount, p.symbol, IFNULL(c.price, 0) AS price,
+        const queryTotalCryptoTransactions = `SELECT p.id, p.amount, CAST(p.amount AS CHAR) AS exact_amount, p.symbol, IFNULL(c.price, 0) AS price,
                 (p.amount * IFNULL(c.price, 0)) AS total_value, c.updated_at
                 FROM portfolio p LEFT JOIN crypto c ON p.symbol = c.symbol WHERE p.wallet_id = ?`
         let results = await store.personalizedQuery(queryTotalCryptoTransactions, [cryptoWallet.id]);
@@ -81,6 +90,7 @@ module.exports = function(injectedStore) {
                 walletName: cryptoWallet.wallet_name,
                 date: result.updated_at,
                 amount: result.amount,
+                exactAmount: result.exact_amount,
                 symbol: result.symbol,
                 price: result.price,
                 total: utils.roundDecimalsGetNumber(result.total_value),
@@ -90,6 +100,8 @@ module.exports = function(injectedStore) {
     }
 
     async function getProfitLoss(userId, walletId, categoryId){
+        walletId = validate.integer(walletId, 'La billetera');
+        if (categoryId !== undefined) categoryId = validate.integer(categoryId, 'La categoría');
         let query = "select DATE_FORMAT(t.date, '%Y-%m-01') as date, " +
             "       sum(case when c.type = 'income' then t.amount else 0 end) income, " +
             "       sum(case when c.type = 'expense' then t.amount else 0 end) expense, " +
@@ -122,8 +134,7 @@ module.exports = function(injectedStore) {
     }
 
     async function saveTransaction(userId, transaction){
-        if(!transaction.date || !transaction.amount || !transaction.categoryId)
-            throw error('Bad request', constants.http.bad_request, false);
+        transaction = validate.transaction(transaction, false, false);
         let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
         let queryParameters = [userId, transaction.categoryId];
         let result = await store.personalizedQuery(query, queryParameters);
@@ -139,19 +150,18 @@ module.exports = function(injectedStore) {
     }
 
     async function saveCriptoTransaction(userId, transaction){
-        if(!transaction.walletId || !transaction.symbol || !transaction.amount)
-            throw error('Bad request', constants.http.bad_request, false);
-
-        transaction.symbol = transaction.symbol.toUpperCase();
+        transaction = validate.transaction(transaction, true, false);
 
         // Primero verifica si la wallet existe y es del usuario
         const wallet = await store.query('wallet', {id: transaction.walletId}, {user_id: userId});
 
         if(wallet[0]) {
             // verifica si ya existe un registro con ese symbol para actualizar su monto
-            const portfolioTransaction = await store.query('portfolio', {wallet_id: transaction.walletId}, {symbol: transaction.symbol})
+            const portfolioTransaction = await store.personalizedQuery(
+                'SELECT id, CAST(amount AS CHAR) AS amount FROM portfolio WHERE wallet_id = ? AND symbol = ?',
+                [transaction.walletId, transaction.symbol]);
             if(portfolioTransaction[0]){
-                const newAmount = transaction.amount + portfolioTransaction[0].amount;
+                const newAmount = validate.addCryptoAmounts(transaction.amount, portfolioTransaction[0].amount);
                 await store.update('portfolio', {amount: newAmount}, {id: portfolioTransaction[0].id});
                 return constants.http.ok;
             }
@@ -167,8 +177,7 @@ module.exports = function(injectedStore) {
     }
 
     async function updateCriptoTransaction(userId, transaction){
-        if(!transaction.id || !transaction.symbol || !transaction.amount)
-            throw error('Bad request', constants.http.bad_request, false);
+        transaction = validate.transaction(transaction, true, true);
 
         // Primero verifica que la transacción existe
         const cryptoTransaction = await store.query('portfolio', {id: transaction.id}, {symbol: transaction.symbol});
@@ -184,8 +193,7 @@ module.exports = function(injectedStore) {
     }
 
     async function updateTransaction(userId, transaction){
-        if(!transaction.id || !transaction.categoryId || !transaction.amount ||  !transaction.date)
-            throw error('Bad request', constants.http.bad_request, false);
+        transaction = validate.transaction(transaction, false, true);
 
         // Primero verifica que la transacción existe
         const transactionOriginal = await store.query(TABLE, {id: transaction.id});
@@ -211,8 +219,7 @@ module.exports = function(injectedStore) {
     }
 
     async function deleteCriptoTransaction(userId, transactionId){
-        if(!transactionId)
-            throw error('Bad request', constants.http.bad_request, false);
+        transactionId = validate.integer(transactionId, 'La transacción');
 
         // Primero verifica que la transacción existe
         const cryptoTransaction = await store.query('portfolio', {id: transactionId});
@@ -228,8 +235,7 @@ module.exports = function(injectedStore) {
     }
 
     async function deleteTransaction(userId, transactionId){
-        if(!transactionId)
-            throw error('Bad request', constants.http.bad_request, false);
+        transactionId = validate.integer(transactionId, 'La transacción');
 
         // Primero verifica que la transacción existe
         const transaction = await store.query(TABLE, {id: transactionId});

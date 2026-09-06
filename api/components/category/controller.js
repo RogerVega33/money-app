@@ -1,3 +1,4 @@
+const validate = require('../../../utils/dataValidation');
 const TABLE = 'category';
 const error = require('../../../utils/errors');
 const constants = require('../../../utils/constants');
@@ -9,6 +10,7 @@ module.exports = function(injectedStore) {
     }
 
     async function getCategories(userId, walletId){
+        walletId = validate.integer(walletId, 'La billetera');
         let query = "select c.* from category c, wallet w " +
             " where c.wallet_id = w.id and w.user_id = ? and w.id = ? order by c.name";
         let results = await store.personalizedQuery(query, [userId, walletId]);
@@ -23,6 +25,7 @@ module.exports = function(injectedStore) {
     }
 
     async function saveCategory(userId, category){
+        category = validate.category(category);
         // Actualizar
         if(category.id) {
             let query = "select c.* from category c, wallet w " +

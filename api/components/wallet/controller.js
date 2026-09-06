@@ -1,7 +1,8 @@
+const validate = require('../../../utils/dataValidation');
 const TABLE = 'wallet';
 const utils = require('../../../utils/utils');
 const cryptoPriceService = require('./cryptoPriceService');
-const transactionsController = require('../transaction')
+
 
 module.exports = function(injectedStore) {
     let store = injectedStore;
@@ -9,6 +10,7 @@ module.exports = function(injectedStore) {
         store = require('../../../store/mysql');
     }
     const cryptoPrice = cryptoPriceService(store);
+    const transactionsController = require('../transaction/controller')(store);
 
     async function getWallets(userId){
         let wallets;
@@ -75,7 +77,7 @@ module.exports = function(injectedStore) {
     }
 
     async function saveWallet(userId, wallet){
-        if (wallet.type === 'crypto') {wallet.startingAmount = 0}
+        wallet = validate.wallet(wallet);
 
         const newWallet = {
             name: wallet.name,
