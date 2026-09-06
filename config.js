@@ -1,10 +1,16 @@
+const jwtSecret = process.env.JWT_SECRET;
+
+if (!jwtSecret || Buffer.byteLength(jwtSecret.trim(), 'utf8') < 32) {
+    throw new Error('JWT_SECRET es obligatorio y debe tener al menos 32 bytes. Genera un secreto aleatorio y configúralo en el entorno antes de iniciar el backend.');
+}
+
 module.exports = {
     api: {
         port: process.env.API_PORT || 3000,
         env: process.env.API_ENV || 'dev',
     },
     jwt: {
-        secret: process.env.JWT_SECRET || 'JWT SECRET',
+        secret: jwtSecret,
     },
     mysql: {
         host: process.env.MYSQL_HOST || 'localhost',

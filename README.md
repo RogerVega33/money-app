@@ -7,7 +7,24 @@ Money app te ayuda a llevar un registro de tus gastos
 ### Node
 Editar las variables de entorno en el archivo .env (o crearlo en caso de que no exista). El archivo .env.example sirve de guía.
 
-Ejecutar:
+#### Secreto de autenticación
+
+Antes de iniciar el backend, configura `JWT_SECRET` en `.env` o en las variables
+del entorno. Es obligatorio en todos los entornos, incluido desarrollo: el
+servidor no arranca si falta, está vacío o tiene menos de 32 bytes sin contar
+espacios en los extremos. La longitud mínima no garantiza aleatoriedad; 
+para una mayor seguridad genera el valor con:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+Copia el resultado en `JWT_SECRET` y mantenlo privado, fuera de Git. Usa el mismo
+valor entre reinicios e instancias del backend. Al cambiarlo, las sesiones
+existentes dejan de ser válidas y tendrás que iniciar sesión nuevamente.
+
+
+Para iniciar el servidor ejecutar:
 
 ```bash
 npm install
