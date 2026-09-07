@@ -20,6 +20,7 @@ function buildCorsOptions() {
             return callback(new Error(`Not allowed by CORS: ${origin}`));
         },
         credentials: true,
+        exposedHeaders: ['Retry-After'],
     };
 }
 

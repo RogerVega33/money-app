@@ -14,6 +14,10 @@ const {
 
 const RECOVERY_PHRASE_WORDS = 6;
 
+function authenticationFailure() {
+    return Object.assign(new Error('Información incorrecta'), { authenticationFailed: true });
+}
+
 module.exports = function(injectedStore) {
     let store = injectedStore;
     if(!store){
@@ -60,9 +64,10 @@ module.exports = function(injectedStore) {
 
         // Valida que el usuario exista
         const user = await store.query(TABLE, { username: body.username });
-        const valid = user[0] && await verifyRecoveryPhrase(body.recoveryPhrase, user[0].recovery_phrase);
+        const valid = user[0]?.recovery_phrase && typeof body.recoveryPhrase === 'string' &&
+            await verifyRecoveryPhrase(body.recoveryPhrase, user[0].recovery_phrase);
 
-        if(!valid) throw new Error("Información incorrecta");
+        if(!valid) throw authenticationFailure();
 
         const newPasswordHash = await utils.getHash(body.newPassword);
         await store.update(TABLE, { password: newPasswordHash }, { id: user[0].id });
@@ -71,14 +76,15 @@ module.exports = function(injectedStore) {
     }
 
     async function login(username, password) {
+        if (typeof password !== 'string' || !password) throw authenticationFailure();
         const user = await store.query(TABLE, { username: username });
-        if (!user.length) throw new Error("Información incorrecta");
+        if (!user.length) throw authenticationFailure();
 
         const match = await bcrypt.compare(password, user[0].password);
 
         if (!match) {
             await store.update(TABLE, { login_attempts: user[0].login_attempts + 1 }, { id: user[0].id });
-            throw new Error("Información incorrecta");
+            throw authenticationFailure();
         }
 
         const response = {
@@ -100,10 +106,10 @@ module.exports = function(injectedStore) {
             throw error(passwordErrors.join(' '), constants.http.bad_request, false)
 
         const user = await store.query(TABLE, { username });
-        if (!user.length) throw error('Datos incorrectos', constants.http.not_found, false);
+        if (!user.length || typeof oldPassword !== 'string' || !oldPassword) throw authenticationFailure();
 
         const match = await bcrypt.compare(oldPassword, user[0].password);
-        if (!match) throw error('Datos incorrectos', constants.http.not_found, false);
+        if (!match) throw authenticationFailure();
 
         const newPasswordHash = await utils.getHash(newPassword);
         await store.update(TABLE, { password: newPasswordHash }, { id: user[0].id });

@@ -17,6 +17,7 @@ const transaction = require('./components/transaction/router');
 const auth = require('./components/auth/router');
 
 const app = express();
+app.set('trust proxy', config.api.trustProxy);
 
 app.use(helmet({
    contentSecurityPolicy: false,
