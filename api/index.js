@@ -18,6 +18,7 @@ const auth = require('./components/auth/router');
 
 const app = express();
 app.set('trust proxy', config.api.trustProxy);
+app.use(loggerInterceptor);
 
 app.use(helmet({
    contentSecurityPolicy: false,
@@ -29,7 +30,6 @@ app.options('*', corsMiddleware());
 
 app.use(compression());
 app.use(express.json());
-app.use(loggerInterceptor);
 
 // TEMPORAL: simular una conexión lenta para probar los estados de carga.
 // Eliminar este middleware al terminar las pruebas.

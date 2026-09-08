@@ -4,6 +4,11 @@ services:
   frontend:
     image: money-app-web:latest
     restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "8085:80"
     environment:
@@ -14,6 +19,11 @@ services:
   backend:
     image: money-app:latest
     restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Recomendación: NO publicar el puerto del backend hacia el host si solo lo consume el frontend.
     # Si necesitas acceder al backend desde afuera para pruebas, descomenta ports.
     # ports:

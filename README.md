@@ -63,21 +63,32 @@ CORS_ORIGIN=http://localhost:8080,https://miapp.com,https://admin.miapp.com
 
 ## Límites de autenticación
 
+Configuración opcional: `AUTH_WINDOW_SECONDS=900`, `AUTH_ACCOUNT_MAX_FAILURES=5`,
+`AUTH_IP_MAX_REQUESTS=100`, `AUTH_MAX_ENTRIES=10000`.
+Son opcionales porque en caso de no especificarlas se usan sus valores por defecto.
+
 Las respuestas de autenticación con límite excedido usan HTTP 429 y exponen
 `Retry-After` (segundos de espera).
 
-Configuración opcional: `AUTH_WINDOW_SECONDS=900`, `AUTH_ACCOUNT_MAX_FAILURES=5`,
-`AUTH_IP_MAX_REQUESTS=100`, `AUTH_MAX_ENTRIES=10000`.
 Los contadores son locales y se pierden al reiniciar. Las entradas
 caducadas se limpian periódicamente. Si se alcanza la capacidad, se rechazan
 temporalmente nuevas claves sin borrar bloqueos vigentes.
 
 ### Proxy e IP del cliente
 
-En ejecución directa sin un proxy (como Nginx), deja `TRUST_PROXY` vacío: Express usa la IP
+Para obtener correctamente la IP del cliente en los límites de autenticación se usa `TRUST_PROXY`:
+
+En ejecución directa (sin un proxy como Nginx), dejar `TRUST_PROXY=`vacío: Express usa la IP
 de la conexión e ignora `X-Forwarded-For`. 
-Los archivos Docker Compose ya configuran `TRUST_PROXY=1` para el único salto Nginx 
-y no publican el puerto del backend para no tener un acceso directo.
+
+Para desarrollo con npm y Vue, con `npm run serve` Vue también funciona como proxy.
+Si ambos procesos están en el mismo equipo, configura `TRUST_PROXY=loopback`.
+El proxy de Vue sobrescribe `X-Forwarded-For` con la IP del dispositivo conectado.
+Express solo confía en esa cabecera cuando la conexión proviene de loopback;
+
+Para Docker Compose, los archivos de compose ya configuran `TRUST_PROXY=1` para el único salto Nginx 
+y no publican el puerto del backend para no tener un acceso directo al backend.
+
 Para otra topología, configura `TRUST_PROXY` con la IP o CIDR del proxy de
 confianza. No uses confianza global. Reconstruye también la imagen del frontend
 para aplicar el cambio de Nginx.

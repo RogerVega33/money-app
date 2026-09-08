@@ -1,4 +1,5 @@
 const mysql = require('mysql');
+const logger = require('../network/logger');
 const config = require('../config');
 
 const dbconf = {
@@ -16,7 +17,7 @@ function handleConnection(){
     
     connection.connect((error) =>{
         if(error){
-            console.error('[db error]', error);
+            logger.writeError('db_connection_error', error);
             setTimeout(handleConnection, 200);    
         }else{
             console.log('DB connected');
@@ -24,7 +25,7 @@ function handleConnection(){
     });
 
     connection.on('error', error => {
-        console.error('[db error]', error);
+        logger.writeError('db_connection_error', error);
         if(error.code === 'PROTOCOL_CONNECTION_LOST' || error.code ===  'ECONNRESET'){
             handleConnection();
         } else{
