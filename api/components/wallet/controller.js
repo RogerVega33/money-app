@@ -17,7 +17,7 @@ module.exports = function(injectedStore) {
     async function getWallets(userId){
         let wallets;
 
-        const query = "select id, name, starting_amount, detail, type, " +
+        const query = "select id, name, starting_amount, detail, type, exclude_from_total, is_archived, " +
             "(select ifnull(sum(amount), 0) from transaction where category_id in (select id from category c where c.wallet_id=w.id and type = 'income')) AS total_income, " +
             "(select ifnull(sum(amount), 0) from transaction where category_id in (select id from category c where c.wallet_id=w.id and type = 'expense')) AS total_expense, " +
             "(select starting_amount + total_income - total_expense) as total " +
@@ -33,11 +33,13 @@ module.exports = function(injectedStore) {
                 total: utils.roundDecimals(wallet.total),
                 detail: wallet.detail,
                 type: wallet.type,
+                excludeFromTotal: Boolean(wallet.exclude_from_total),
+                isArchived: Boolean(wallet.is_archived),
             }
         });
 
         // Obtengo las crypto wallets del usuario
-        const queryCryptoWallets = "select id, name, starting_amount, detail, type " +
+        const queryCryptoWallets = "select id, name, starting_amount, detail, type, exclude_from_total, is_archived " +
             "from wallet w where id in (select id from wallet where user_id = ?) and type = 'crypto'";
         let cryptoWallets = await store.personalizedQuery(queryCryptoWallets, [userId]);
 
@@ -71,6 +73,8 @@ module.exports = function(injectedStore) {
                     total: utils.roundDecimals(totalPortfolio),
                     detail: cw.detail,
                     type: cw.type,
+                    excludeFromTotal: Boolean(cw.exclude_from_total),
+                    isArchived: Boolean(cw.is_archived),
                 });
             }
         }
@@ -87,6 +91,8 @@ module.exports = function(injectedStore) {
             user_id: userId,
             starting_amount: wallet.startingAmount || 0,
             type: wallet.type || 'fiat',
+            exclude_from_total: Number(wallet.excludeFromTotal),
+            is_archived: 0,
         };
         await store.insert(TABLE, newWallet);
         return { message: 'Operación exitosa' };

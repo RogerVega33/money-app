@@ -99,24 +99,32 @@ function category(value) {
     return result;
 }
 
+function boolean(value, label) {
+    if (![true, false, 0, 1].includes(value)) badRequest(`${label} debe ser true, false, 1 o 0.`);
+    return value === true || value === 1;
+}
+
 function wallet(value) {
     object(value);
     const type = choice(value.type === undefined ? 'fiat' : value.type, 'El tipo de billetera', ['fiat', 'crypto']);
     const startingAmount = amount(value.startingAmount === undefined ? 0 : value.startingAmount, false, true);
     if (type === 'crypto' && Number(startingAmount) !== 0) badRequest('Una billetera cripto debe tener saldo inicial cero.');
-    return { name: text(value.name, 'El nombre', 50), detail: text(value.detail, 'El detalle', 150, true), type, startingAmount };
+    const excludeFromTotal = value.excludeFromTotal === undefined ? false : boolean(value.excludeFromTotal, 'Excluir del total');
+    return { name: text(value.name, 'El nombre', 50), detail: text(value.detail, 'El detalle', 150, true), type, startingAmount, excludeFromTotal };
 }
 
 function walletUpdate(value, type) {
     object(value);
     choice(type, 'El tipo de billetera', ['fiat', 'crypto']);
-    const allowed = type === 'fiat' ? ['id', 'name', 'detail', 'startingAmount'] : ['id', 'name', 'detail'];
+    const allowed = type === 'fiat' ? ['id', 'name', 'detail', 'startingAmount', 'excludeFromTotal', 'isArchived'] : ['id', 'name', 'detail', 'excludeFromTotal', 'isArchived'];
     if (Object.keys(value).some(key => !allowed.includes(key))) {
         badRequest(type === 'fiat'
-            ? 'Solo puede editar el nombre, la descripción y el monto inicial de una billetera fiat.'
-            : 'Solo puede editar el nombre y la descripción de una billetera cripto.');
+            ? 'Solo puede editar el nombre, la descripción, el monto inicial y las opciones de exclusión y archivo de una billetera fiat.'
+            : 'Solo puede editar el nombre, la descripción y las opciones de exclusión y archivo de una billetera cripto.');
     }
     const result = { name: text(value.name, 'El nombre', 50) };
+    if (value.excludeFromTotal !== undefined) result.exclude_from_total = Number(boolean(value.excludeFromTotal, 'Excluir del total'));
+    if (value.isArchived !== undefined) result.is_archived = Number(boolean(value.isArchived, 'Archivada'));
     if (value.detail !== undefined) {
         result.detail = text(value.detail, 'La descripción', 150, true);
     }
