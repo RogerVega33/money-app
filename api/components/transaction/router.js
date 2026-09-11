@@ -4,6 +4,7 @@ const response = require('../../../network/response');
 const constants = require('../../../utils/constants');
 const controller = require('./index');
 const secure = require('../../../auth/secure');
+const { transactionsChanged } = require('../../../network/realtime');
 
 //ROUTES
 router.get('/', secure(), getTransactions);
@@ -44,6 +45,7 @@ function getProfitLoss(req, res, next) {
 function saveTransaction(req, res, next) {
     controller.saveTransaction(req.userId, req.body)
         .then(result => {
+            transactionsChanged(req);
             response.success(req, res, result, constants.http.ok);
         })
         .catch(next);
@@ -52,6 +54,7 @@ function saveTransaction(req, res, next) {
 function saveCriptoTransaction(req, res, next) {
     controller.saveCriptoTransaction(req.userId, req.body)
         .then(result => {
+            transactionsChanged(req);
             response.success(req, res, {}, result);
         })
         .catch(next);
@@ -60,6 +63,7 @@ function saveCriptoTransaction(req, res, next) {
 function updateCriptoTransaction(req, res, next) {
     controller.updateCriptoTransaction(req.userId, req.body)
         .then(result => {
+            transactionsChanged(req);
             response.success(req, res, {}, result);
         })
         .catch(next);
@@ -68,6 +72,7 @@ function updateCriptoTransaction(req, res, next) {
 function updateTransaction(req, res, next) {
     controller.updateTransaction(req.userId, req.body)
         .then(result => {
+            transactionsChanged(req);
             response.success(req, res, {}, result);
         })
         .catch(next);
@@ -76,6 +81,7 @@ function updateTransaction(req, res, next) {
 function deleteCriptoTransaction(req, res, next) {
     controller.deleteCriptoTransaction(req.userId, req.query.transactionId)
         .then(resultList => {
+            transactionsChanged(req);
             response.success(req, res, resultList, constants.http.ok);
         })
         .catch(next);
@@ -84,6 +90,7 @@ function deleteCriptoTransaction(req, res, next) {
 function deleteTransaction(req, res, next) {
     controller.deleteTransaction(req.userId, req.query.transactionId)
         .then(resultList => {
+            transactionsChanged(req);
             response.success(req, res, resultList, constants.http.ok);
         })
         .catch(next);

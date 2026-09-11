@@ -30,3 +30,4 @@ function corsMiddleware() {
 }
 
 module.exports = corsMiddleware;
+module.exports.buildCorsOptions = buildCorsOptions;

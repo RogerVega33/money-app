@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 const express = require('express');
+const { createServer } = require('node:http');
+const { attachRealtime } = require('../network/realtime');
 //const swaggerUi = require('swagger-ui-express');
 const config = require('../config.js');
 const compression = require('compression');
@@ -49,6 +51,8 @@ app.use('/api/transaction', transaction);
 app.use(errors);
 app.use(errorsNotDefined);
 
-app.listen(config.api.port, () => {
+const server = createServer(app);
+app.set('realtime', attachRealtime(server));
+server.listen(config.api.port, () => {
    console.log('listening on Server port ', config.api.port);
 });
