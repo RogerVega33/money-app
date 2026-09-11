@@ -107,6 +107,25 @@ function wallet(value) {
     return { name: text(value.name, 'El nombre', 50), detail: text(value.detail, 'El detalle', 150, true), type, startingAmount };
 }
 
+function walletUpdate(value, type) {
+    object(value);
+    choice(type, 'El tipo de billetera', ['fiat', 'crypto']);
+    const allowed = type === 'fiat' ? ['id', 'name', 'detail', 'startingAmount'] : ['id', 'name', 'detail'];
+    if (Object.keys(value).some(key => !allowed.includes(key))) {
+        badRequest(type === 'fiat'
+            ? 'Solo puede editar el nombre, la descripción y el monto inicial de una billetera fiat.'
+            : 'Solo puede editar el nombre y la descripción de una billetera cripto.');
+    }
+    const result = { name: text(value.name, 'El nombre', 50) };
+    if (value.detail !== undefined) {
+        result.detail = text(value.detail, 'La descripción', 150, true);
+    }
+    if (type === 'fiat' && value.startingAmount !== undefined) {
+        result.starting_amount = amount(value.startingAmount, false, true);
+    }
+    return result;
+}
+
 function addCryptoAmounts(left, right) {
     const units = value => {
         const [whole, fraction = ''] = amount(value, true, true).split('.');
@@ -116,4 +135,4 @@ function addCryptoAmounts(left, right) {
     return amount(sum.slice(0, -10) + '.' + sum.slice(-10), true);
 }
 
-module.exports = { object, integer, text, choice, amount, date, symbol, transaction, category, wallet, addCryptoAmounts };
+module.exports = { object, integer, text, choice, amount, date, symbol, transaction, category, wallet, walletUpdate, addCryptoAmounts };

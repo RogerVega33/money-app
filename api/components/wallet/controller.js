@@ -1,5 +1,7 @@
 const validate = require('../../../utils/dataValidation');
 const TABLE = 'wallet';
+const error = require('../../../utils/errors');
+const constants = require('../../../utils/constants');
 const utils = require('../../../utils/utils');
 const cryptoPriceService = require('./cryptoPriceService');
 
@@ -86,10 +88,22 @@ module.exports = function(injectedStore) {
             starting_amount: wallet.startingAmount || 0,
             type: wallet.type || 'fiat',
         };
-        return store.insert(TABLE, newWallet);
+        await store.insert(TABLE, newWallet);
+        return { message: 'Operación exitosa' };
+    }
+
+    async function updateWallet(userId, wallet) {
+        validate.object(wallet);
+        const id = validate.integer(wallet.id, 'La billetera');
+        const wallets = await store.query(TABLE, { id }, { user_id: userId });
+        if (!wallets[0]) throw error('Not found', constants.http.not_found, false);
+        const changes = validate.walletUpdate(wallet, wallets[0].type);
+        await store.update(TABLE, changes, { id });
+        return { message: 'Operación exitosa' };
     }
 
     return{
+        updateWallet,
         getWallets,
         saveWallet,
     };

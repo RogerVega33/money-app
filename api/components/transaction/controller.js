@@ -145,12 +145,13 @@ module.exports = function(injectedStore) {
         let queryParameters = [userId, transaction.categoryId];
         let result = await store.personalizedQuery(query, queryParameters);
         if(result[0]){
-            return store.insert(TABLE, {
+            await store.insert(TABLE, {
                 date: transaction.date,
                 amount: transaction.amount,
                 detail: transaction.detail,
                 category_id: transaction.categoryId
             });
+            return { message: 'Transacción creada correctamente.' };
         }
         throw error('Bad request', constants.http.bad_request, false);
     }
@@ -234,7 +235,7 @@ module.exports = function(injectedStore) {
             const wallet = await store.query('wallet', {id: cryptoTransaction[0].wallet_id}, {user_id: userId});
             if(wallet[0]) {
                 await store.deleteData('portfolio', {id: transactionId});
-                return constants.http.ok;
+                return { message: 'Operación exitosa' };
             }
         }
         throw error('Not found', constants.http.not_found, false);
@@ -252,7 +253,7 @@ module.exports = function(injectedStore) {
             let result = await store.personalizedQuery(query, queryParameters);
             if(result[0]) {
                 await store.deleteData(TABLE, {id: transactionId});
-                return constants.http.ok;
+                return { message: 'Operación exitosa' };
             }
         }
         throw error('Not found', constants.http.not_found, false);

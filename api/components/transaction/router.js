@@ -80,18 +80,18 @@ function updateTransaction(req, res, next) {
 
 function deleteCriptoTransaction(req, res, next) {
     controller.deleteCriptoTransaction(req.userId, req.query.transactionId)
-        .then(resultList => {
+        .then(result => {
             transactionsChanged(req);
-            response.success(req, res, resultList, constants.http.ok);
+            response.success(req, res, result, constants.http.ok);
         })
         .catch(next);
 }
 
 function deleteTransaction(req, res, next) {
     controller.deleteTransaction(req.userId, req.query.transactionId)
-        .then(resultList => {
+        .then(result => {
             transactionsChanged(req);
-            response.success(req, res, resultList, constants.http.ok);
+            response.success(req, res, result, constants.http.ok);
         })
         .catch(next);
 }

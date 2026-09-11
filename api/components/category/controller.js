@@ -32,7 +32,8 @@ module.exports = function(injectedStore) {
                 " where c.wallet_id = w.id and w.user_id = ? and c.id = ?";
             let results = await store.personalizedQuery(query, [userId, category.id]);
             if(results[0]){
-                return store.update(TABLE, {name: category.name}, {id: category.id});
+                await store.update(TABLE, {name: category.name}, {id: category.id});
+                return { message: 'Operación exitosa' };
             }
             return null;
         }
@@ -47,11 +48,12 @@ module.exports = function(injectedStore) {
 
         if(results[0]) return null;
 
-        return store.insert(TABLE, {
+        await store.insert(TABLE, {
             name: category.name,
             type: category.type,
             wallet_id: category.walletId
         });
+        return { message: 'Operación exitosa' };
     }
 
     return{
