@@ -14,7 +14,7 @@ function log(req, res, next) {
         if (!captured) {
             captured = true;
             responseBody = body && typeof body === 'object' && !Buffer.isBuffer(body)
-                ? logger.redact(body) : '[Respuesta no JSON: contenido omitido]';
+                ? logger.formatResponse(body) : '[Respuesta no JSON: contenido omitido]';
         }
         return send.call(this, body);
     };

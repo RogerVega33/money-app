@@ -1,3 +1,8 @@
+// Máximo a imprimir por array del response en el log
+// Usa 0 para imprimir todos los elementos del array
+let maxArrayItems = 5;
+
+// Campos que se ocultan con *** en el log
 const hiddenFields = new Set([
     'password', 'oldpassword', 'newpassword', 'confirmpassword',
     'token', 'accesstoken', 'refreshtoken', 'authorization', 'cookie', 'setcookie',
@@ -8,16 +13,32 @@ const hiddenFields = new Set([
     'totalamount', 'totalportfolio', 'currentvalueusd', 'netflow', 'detail',
 ]);
 
-function redact(value, seen = new WeakSet()) {
+function redact(value, seen = new WeakSet(), truncatedArrays = null, fieldPath = '') {
     if (!value || typeof value !== 'object') return value;
     if (seen.has(value)) return '[Circular]';
     seen.add(value);
     const copy = Array.isArray(value) ? [] : {};
-    for (const [key, field] of Object.entries(value)) {
+    const isArray = Array.isArray(value);
+    const truncate = isArray && truncatedArrays && Number.isInteger(maxArrayItems) && maxArrayItems > 0 && value.length > maxArrayItems;
+    if (truncate) truncatedArrays.push({ field: fieldPath || '$', totalItems: value.length, omittedItems: value.length - maxArrayItems });
+    // Recorrer únicamente la muestra, sin copiar ni redactar los elementos omitidos.
+    for (const [key, field] of Object.entries(truncate ? value.slice(0, maxArrayItems) : value)) {
         const normalized = key.replace(/[_-]/g, '').toLowerCase();
-        Object.defineProperty(copy, key, { value: hiddenFields.has(normalized) ? '***' : redact(field, seen), enumerable: true });
+        const childPath = isArray ? `${fieldPath}[${key}]` : (fieldPath ? `${fieldPath}.${key}` : key);
+        Object.defineProperty(copy, key, { value: hiddenFields.has(normalized) ? '***' : redact(field, seen, truncatedArrays, childPath), enumerable: true });
     }
     seen.delete(value);
+    return copy;
+}
+
+function formatResponse(value) {
+    const truncatedArrays = [];
+    const copy = redact(value, new WeakSet(), truncatedArrays);
+    if (copy && !Array.isArray(copy) && typeof copy === 'object') {
+        // La API usa un sobre { status, error, body }; los metadatos son solo del log.
+        return { ...copy, logMetadata: { ...copy.logMetadata,
+            ...(truncatedArrays.length ? { truncatedArrays } : {}) } };
+    }
     return copy;
 }
 
@@ -30,7 +51,7 @@ function errorDetails(error) {
 function writeRequest({ method, route, ip, status, durationMs, aborted, error, request, response }) {
     const level = aborted || status >= 400 ? (status >= 500 ? 'error' : 'warn') : 'info';
     const entry = { time: new Date().toISOString(), level, event: 'http_request',
-        method, route, ip, status, durationMs, aborted,
+        method, route, ip, httpStatus: status, durationMs, aborted,
         request: redact(request), response: redact(response) };
     if (error) entry.error = errorDetails(error);
     const output = level === 'error' ? console.error : console.log;
@@ -42,4 +63,4 @@ function writeError(event, error) {
         error: errorDetails(error) }));
 }
 
-module.exports = { writeRequest, writeError, redact };
+module.exports = { writeRequest, writeError, redact, formatResponse };
