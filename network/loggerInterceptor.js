@@ -29,6 +29,7 @@ function log(req, res, next) {
             durationMs: Math.round(Number(process.hrtime.bigint() - started) / 1e6 * 100) / 100,
             aborted,
             error: res.locals.logError,
+            reference: res.locals.errorReference,
             request: { query: req.query || {}, body: req.body || {} },
             response: responseBody,
         });

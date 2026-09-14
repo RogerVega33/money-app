@@ -14,8 +14,8 @@ exports.successFile = function(req, res, file, status) {
     res.status(status).attachment(file.fileName).send(file.file);
 };
 
-exports.error = function(req, res, message, status) {
-    let statusMessage = {message: message || 'Internal server error'};
+exports.error = function(req, res, message, status, reference) {
+    let statusMessage = {message: message || 'Internal server error', ...(reference ? { reference } : {})};
     const responseBody = {
         status: status || constants.http.internal_server_error,
         error: true,

@@ -1,4 +1,5 @@
 const axios = require("axios");
+const logger = require('../../../network/logger');
 const config = require('../../../config.js');
 
 const cachedTime = config.crypto.cacheMinutes  * 60 * 1000;
@@ -42,7 +43,7 @@ module.exports = function(store) {
             if (symbol === "USDT" || symbol === "USDC") {
                 price = 1.0;
             } else {
-                console.log(`Consultando en Binance el valor de ${symbol}`)
+                console.log(`Consultando el valor de ${symbol}...`)
                 const url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`;
                 const response = await axios.get(url, { timeout: 5000 });
                 price = parseFloat(response.data.price);
@@ -52,7 +53,7 @@ module.exports = function(store) {
                 ON DUPLICATE KEY UPDATE price = ?, updated_at = ?`;
             await store.personalizedQuery(query, [symbol, price, now, price, now]);
         } catch (err) {
-            console.error(`Error al consultar en Binance el valor de ${symbol}: ${err.message}`);
+            logger.writeError('crypto_price_refresh_error', err, { symbol });
         }
     }
 

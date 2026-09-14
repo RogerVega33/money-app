@@ -15,7 +15,7 @@ const {
 const RECOVERY_PHRASE_WORDS = 6;
 
 function authenticationFailure() {
-    return Object.assign(new Error('Información incorrecta'), { authenticationFailed: true });
+    return Object.assign(error('Información incorrecta', constants.http.bad_request, false), { authenticationFailed: true });
 }
 
 module.exports = function(injectedStore) {
@@ -38,7 +38,12 @@ module.exports = function(injectedStore) {
         const recoveryPhrase = generateRecoveryPhrase(RECOVERY_PHRASE_WORDS);
         const recoveryPhraseHash = await hashRecoveryPhrase(recoveryPhrase);
 
-        await store.insert(TABLE, { username: username, name: username, password: passwordHash, recovery_phrase: recoveryPhraseHash });
+        try {
+            await store.insert(TABLE, { username: username, name: username, password: passwordHash, recovery_phrase: recoveryPhraseHash });
+        } catch (cause) {
+            if (cause.code === 'ER_DUP_ENTRY') throw error('Usuario ya existe', constants.http.conflict, false);
+            throw cause;
+        }
 
         const user = await store.query(TABLE, { username: username });
         if(user[0]) {

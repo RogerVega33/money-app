@@ -43,23 +43,26 @@ function formatResponse(value) {
 }
 
 function errorDetails(error) {
-    const code = typeof error?.code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(error.code)
+    const code = typeof error?.code === 'string'
         ? error.code : undefined;
-    return { type: error instanceof TypeError ? 'TypeError' : 'Error', ...(code ? { code } : {}) };
+    return { type: error instanceof TypeError ? 'TypeError' : 'Error', ...(code !== undefined ? { code } : {}) };
 }
 
-function writeRequest({ method, route, ip, status, durationMs, aborted, error, request, response }) {
+function writeRequest({ method, route, ip, status, durationMs, aborted, error, reference, request, response }) {
     const level = aborted || status >= 400 ? (status >= 500 ? 'error' : 'warn') : 'info';
     const entry = { time: new Date().toISOString(), level, event: 'http_request',
         method, route, ip, httpStatus: status, durationMs, aborted,
         request: redact(request), response: redact(response) };
     if (error) entry.error = errorDetails(error);
+    if (reference) entry.reference = reference;
     const output = level === 'error' ? console.error : console.log;
     output(JSON.stringify(entry));
 }
 
-function writeError(event, error) {
+function writeError(event, error, { symbol } = {}) {
+    const safeSymbol = typeof symbol === 'string' && /^[A-Z0-9]{1,10}$/.test(symbol);
     console.error(JSON.stringify({ time: new Date().toISOString(), level: 'error', event,
+        ...(safeSymbol ? { symbol } : {}),
         error: errorDetails(error) }));
 }
 

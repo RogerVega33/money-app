@@ -18,17 +18,17 @@ router.post('/user/recoverUser', limits.account('recovery'), recoverUser);
 
 if(config.api.env === 'dev') router.post('/hash', secure(), getHash);
 
-function createUser(req, res) {
+function createUser(req, res, next) {
     controller.createUser(req.body.username, req.body.password)
         .then(body => {
             response.success(req, res, body, constants.http.created);
         })
         .catch( error => {
-            response.error(req, res, error.message, constants.http.bad_request);
+            next(error);
         });
 }
 
-function recoverUser(req, res) {
+function recoverUser(req, res, next) {
     controller.recoverUser(req.body)
         .then(body => {
             res.locals.authAttempt.finish('success');
@@ -36,11 +36,11 @@ function recoverUser(req, res) {
         })
         .catch( error => {
             res.locals.authAttempt.finish(error.authenticationFailed ? 'failure' : 'neutral');
-            response.error(req, res, error.message, constants.http.bad_request);
+            next(error);
         });
 }
 
-function login(req, res){
+function login(req, res, next){
     controller.login(req.body.username, req.body.password)
         .then(body => {
             res.locals.authAttempt.finish('success');
@@ -48,11 +48,11 @@ function login(req, res){
         })
         .catch( error => {
             res.locals.authAttempt.finish(error.authenticationFailed ? 'failure' : 'neutral');
-            response.error(req, res, error.message, constants.http.bad_request);
+            next(error);
         });
 }
 
-function changePassword(req, res){
+function changePassword(req, res, next){
     controller.changePassword(req.body.username, req.body.oldPassword, req.body.newPassword)
         .then(body => {
             res.locals.authAttempt.finish('success');
@@ -60,17 +60,17 @@ function changePassword(req, res){
         })
         .catch(error => {
             res.locals.authAttempt.finish(error.authenticationFailed ? 'failure' : 'neutral');
-            response.error(req, res, 'Información incorrecta', constants.http.not_found);
+            next(error);
         })
 }
 
-function getHash(req, res){
+function getHash(req, res, next){
     controller.getHash(req.body.text)
         .then(result => {
             response.success(req, res, result, constants.http.ok);
         })
         .catch( error => {
-            response.error(req, res, error.message, constants.http.bad_request);
+            next(error);
         });
 }
 
