@@ -24,6 +24,14 @@ module.exports = function(injectedStore) {
         });
     }
 
+    async function ensureUniqueName(walletId, type, name, excludedId = 0) {
+        const matches = await store.personalizedQuery(
+            'SELECT id FROM category WHERE wallet_id = ? AND type = ? AND LOWER(TRIM(name)) = LOWER(?) AND id <> ? LIMIT 1',
+            [walletId, type, name, excludedId]
+        );
+        if (matches.length) throw error('Ya existe una categoría con ese nombre y tipo en esta billetera', constants.http.conflict, false);
+    }
+
     async function saveCategory(userId, category){
         category = validate.category(category);
         // Actualizar
@@ -32,6 +40,7 @@ module.exports = function(injectedStore) {
                 " where c.wallet_id = w.id and w.user_id = ? and c.id = ?";
             let results = await store.personalizedQuery(query, [userId, category.id]);
             if(results[0]){
+                await ensureUniqueName(results[0].wallet_id, results[0].type, category.name, category.id);
                 await store.update(TABLE, {name: category.name}, {id: category.id});
                 return { message: 'Operación exitosa' };
             }
@@ -41,12 +50,7 @@ module.exports = function(injectedStore) {
         const wallet = await store.query('wallet', {id: category.walletId}, {user_id: userId});
         if (!wallet[0]) throw error('Not found', constants.http.not_found, false);
 
-        // Nuevo registro - verifica que no haya duplicados
-        let query = "select c.* from category c, wallet w " +
-            " where c.wallet_id = w.id and w.user_id = ? and c.type = ? and c.name = ? and w.id = ?";
-        let results = await store.personalizedQuery(query, [userId, category.type, category.name, category.walletId]);
-
-        if(results[0]) return null;
+        await ensureUniqueName(category.walletId, category.type, category.name);
 
         await store.insert(TABLE, {
             name: category.name,

@@ -82,8 +82,17 @@ module.exports = function(injectedStore) {
         return wallets;
     }
 
+    async function ensureUniqueName(userId, name, excludedId = 0) {
+        const matches = await store.personalizedQuery(
+            'SELECT id FROM wallet WHERE user_id = ? AND LOWER(TRIM(name)) = LOWER(?) AND id <> ? LIMIT 1',
+            [userId, name, excludedId]
+        );
+        if (matches.length) throw error('Ya existe una billetera con ese nombre', constants.http.conflict, false);
+    }
+
     async function saveWallet(userId, wallet){
         wallet = validate.wallet(wallet);
+        await ensureUniqueName(userId, wallet.name);
 
         const newWallet = {
             name: wallet.name,
@@ -104,6 +113,7 @@ module.exports = function(injectedStore) {
         const wallets = await store.query(TABLE, { id }, { user_id: userId });
         if (!wallets[0]) throw error('Not found', constants.http.not_found, false);
         const changes = validate.walletUpdate(wallet, wallets[0].type);
+        await ensureUniqueName(userId, changes.name, id);
         await store.update(TABLE, changes, { id });
         return { message: 'Operación exitosa' };
     }
