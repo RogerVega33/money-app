@@ -36,10 +36,11 @@ module.exports = function(injectedStore) {
         category = validate.category(category);
         // Actualizar
         if(category.id) {
-            let query = "select c.* from category c, wallet w " +
+            let query = "select c.*, w.type AS wallet_type from category c, wallet w " +
                 " where c.wallet_id = w.id and w.user_id = ? and c.id = ?";
             let results = await store.personalizedQuery(query, [userId, category.id]);
             if(results[0]){
+                if (results[0].wallet_type !== 'fiat') throw error('Solo puede agregar categorías en una billetera fiat', constants.http.bad_request, false);
                 await ensureUniqueName(results[0].wallet_id, results[0].type, category.name, category.id);
                 await store.update(TABLE, {name: category.name}, {id: category.id});
                 return { message: 'Operación exitosa' };
@@ -49,6 +50,7 @@ module.exports = function(injectedStore) {
         // Verifica la pertenencia de la billetera de destino.
         const wallet = await store.query('wallet', {id: category.walletId}, {user_id: userId});
         if (!wallet[0]) throw error('Not found', constants.http.not_found, false);
+        if (wallet[0].type !== 'fiat') throw error('Solo puede agregar categorías en una billetera fiat', constants.http.bad_request, false);
 
         await ensureUniqueName(category.walletId, category.type, category.name);
 

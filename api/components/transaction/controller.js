@@ -141,10 +141,11 @@ module.exports = function(injectedStore) {
 
     async function saveTransaction(userId, transaction){
         transaction = validate.transaction(transaction, false, false);
-        let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
+        let query = "select c.*, w.type AS wallet_type from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
         let queryParameters = [userId, transaction.categoryId];
         let result = await store.personalizedQuery(query, queryParameters);
         if(result[0]){
+            if (result[0].wallet_type !== 'fiat') throw error('Las transacciones fiat requieren una billetera fiat', constants.http.bad_request, false);
             await store.insert(TABLE, {
                 date: transaction.date,
                 amount: transaction.amount,
@@ -163,6 +164,7 @@ module.exports = function(injectedStore) {
         const wallet = await store.query('wallet', {id: transaction.walletId}, {user_id: userId});
 
         if(wallet[0]) {
+            if (wallet[0].type !== 'crypto') throw error('Las transacciones cripto requieren una billetera cripto', constants.http.bad_request, false);
             // verifica si ya existe un registro con ese symbol para actualizar su monto
             const portfolioTransaction = await store.personalizedQuery(
                 'SELECT id, CAST(amount AS CHAR) AS amount FROM portfolio WHERE wallet_id = ? AND symbol = ?',
@@ -192,6 +194,7 @@ module.exports = function(injectedStore) {
             // valida que la wallet sea del usuario
             const wallet = await store.query('wallet', {id: cryptoTransaction[0].wallet_id}, {user_id: userId});
             if(wallet[0]) {
+                if (wallet[0].type !== 'crypto') throw error('Las transacciones cripto requieren una billetera cripto', constants.http.bad_request, false);
                 await store.update('portfolio', {amount: transaction.amount}, {id: transaction.id});
                 return constants.http.ok;
             }
@@ -206,12 +209,13 @@ module.exports = function(injectedStore) {
         const transactionOriginal = await store.query(TABLE, {id: transaction.id});
         if(transactionOriginal[0]) {
             // valida que la wallet sea del usuario
-            let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
+            let query = "select c.*, w.type AS wallet_type from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
             let queryParameters = [userId, transactionOriginal[0].category_id];
             let result = await store.personalizedQuery(query, queryParameters);
             if(result[0]) {
                 const destinationCategory = await store.personalizedQuery(query, [userId, transaction.categoryId]);
                 if (!destinationCategory[0]) throw error('Not found', constants.http.not_found, false);
+                if (destinationCategory[0].wallet_type !== 'fiat') throw error('Las transacciones fiat requieren una billetera fiat', constants.http.bad_request, false);
 
                 await store.update(TABLE, {
                     amount: transaction.amount,
@@ -248,7 +252,7 @@ module.exports = function(injectedStore) {
         const transaction = await store.query(TABLE, {id: transactionId});
         if(transaction[0]) {
             // valida que la wallet sea del usuario
-            let query = "select * from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
+            let query = "select c.*, w.type AS wallet_type from category c, wallet w where c.wallet_id = w.id and w.user_id = ? and c.id= ?";
             let queryParameters = [userId, transaction[0].category_id];
             let result = await store.personalizedQuery(query, queryParameters);
             if(result[0]) {
