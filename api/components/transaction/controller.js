@@ -126,15 +126,37 @@ module.exports = function(injectedStore) {
         let results = await store.personalizedQuery(query, queryParameters);
         const startingAmount = results.length > 0 && results[0].starting_amount? results[0].starting_amount : 0;
         let acc = startingAmount;
-        let profitLoss = results
-            .map(r => ({...r, total: acc += r.savings}))
-            .map(r => ({
-                date: r.date,
-                income: utils.roundDecimalsGetNumber(r.income),
-                expense: utils.roundDecimalsGetNumber(r.expense),
-                savings: utils.roundDecimalsGetNumber(r.savings),
-                total: utils.roundDecimalsGetNumber(r.total),
-            }));
+        const profitLoss = [];
+        // Índices de mes evitan conversiones de zona horaria y cubren cambios de año.
+        const monthIndex = date => {
+            const [year, month] = date.split('-').map(Number);
+            return year * 12 + month - 1;
+        };
+        let nextMonth = results.length ? monthIndex(results[0].date) : 0;
+        for (const row of results) {
+            const currentMonth = monthIndex(row.date);
+            while (nextMonth < currentMonth) {
+                const year = Math.floor(nextMonth / 12);
+                const month = String(nextMonth % 12 + 1).padStart(2, '0');
+                profitLoss.push({
+                    date: `${year}-${month}-01`,
+                    income: 0,
+                    expense: 0,
+                    savings: 0,
+                    total: utils.roundDecimalsGetNumber(acc),
+                });
+                nextMonth++;
+            }
+            acc += row.savings;
+            profitLoss.push({
+                date: row.date,
+                income: utils.roundDecimalsGetNumber(row.income),
+                expense: utils.roundDecimalsGetNumber(row.expense),
+                savings: utils.roundDecimalsGetNumber(row.savings),
+                total: utils.roundDecimalsGetNumber(acc),
+            });
+            nextMonth = currentMonth + 1;
+        }
         return{
             startingAmount: utils.roundDecimalsGetNumber(startingAmount),
             profitLoss,
