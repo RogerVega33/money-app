@@ -71,9 +71,9 @@ module.exports = function(injectedStore) {
         if(wallet[0]) {
             const portfolio = await store.query('portfolio', {wallet_id: walletId});
             const symbols = [...new Set(portfolio.map(item => item.symbol))];
-            await cryptoPrice.refreshStalePrices(symbols);
+            const failedSymbols = await cryptoPrice.refreshStalePrices(symbols);
 
-            let transactions = await getCryptoTransactionsByWallet(wallet[0]);
+            let transactions = await getCryptoTransactionsByWallet(wallet[0], failedSymbols);
             const totalPortfolio = transactions.reduce((acc, item) => acc + parseFloat(item.total), 0);
             return {
                 transactions,
@@ -84,8 +84,8 @@ module.exports = function(injectedStore) {
         }
     }
 
-    async function getCryptoTransactionsByWallet(cryptoWallet) {
-        const queryTotalCryptoTransactions = `SELECT p.id, p.amount, CAST(p.amount AS CHAR) AS exact_amount, p.symbol, IFNULL(c.price, 0) AS price,
+    async function getCryptoTransactionsByWallet(cryptoWallet, failedSymbols = new Set()) {
+        const queryTotalCryptoTransactions = `SELECT p.id, p.amount, CAST(p.amount AS CHAR) AS exact_amount, p.symbol, IFNULL(c.price, 0) AS price, c.price IS NOT NULL AS has_price,
                 (p.amount * IFNULL(c.price, 0)) AS total_value, c.updated_at
                 FROM portfolio p LEFT JOIN crypto c ON p.symbol = c.symbol WHERE p.wallet_id = ?`
         let results = await store.personalizedQuery(queryTotalCryptoTransactions, [cryptoWallet.id]);
@@ -99,6 +99,8 @@ module.exports = function(injectedStore) {
                 exactAmount: result.exact_amount,
                 symbol: result.symbol,
                 price: result.price,
+                hasPrice: Boolean(result.has_price),
+                priceUpdateFailed: failedSymbols.has(result.symbol),
                 total: utils.roundDecimalsGetNumber(result.total_value),
                 type: cryptoWallet.type,
             }

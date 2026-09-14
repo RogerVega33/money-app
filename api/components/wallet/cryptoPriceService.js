@@ -6,7 +6,8 @@ const cachedTime = config.crypto.cacheMinutes  * 60 * 1000;
 
 module.exports = function(store) {
     async function refreshStalePrices(symbolList) {
-        if (!symbolList?.length) return;
+        const failedSymbols = new Set();
+        if (!symbolList?.length) return failedSymbols;
 
         // Consulta la BD para saber cuándo se actualizó cada símbolo
         const placeholders = symbolList.map(() => '?').join(', ');
@@ -27,12 +28,13 @@ module.exports = function(store) {
             const isStale = !lastUpdate || (now - new Date(lastUpdate)) > cachedTime;
 
             if (isStale) {
-                await updateCryptoPrice(symbol);
+                if (!await updateCryptoPrice(symbol)) failedSymbols.add(symbol);
             } else {
                 console.log(`Precio de ${symbol} en caché`);
             }
         }
 
+        return failedSymbols;
     }
 
     async function updateCryptoPrice(symbol) {
@@ -52,8 +54,10 @@ module.exports = function(store) {
             const query = `INSERT INTO crypto (symbol, price, updated_at) VALUES (?, ?, ?) 
                 ON DUPLICATE KEY UPDATE price = ?, updated_at = ?`;
             await store.personalizedQuery(query, [symbol, price, now, price, now]);
+            return true;
         } catch (err) {
             logger.writeError('crypto_price_refresh_error', err, { symbol });
+            return false;
         }
     }
 
