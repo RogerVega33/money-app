@@ -12,7 +12,7 @@ module.exports = function(injectedStore) {
     }
     const cryptoPrice = cryptoPriceService(store);
 
-    async function getTransactions(userId, walletId, year, month, categoryId){
+    async function getTransactions(userId, walletId, year, month, categoryId, startMonth, endMonth){
         walletId = validate.integer(walletId, 'La billetera');
         if (categoryId !== undefined) categoryId = validate.integer(categoryId, 'La categoría');
         if (year !== undefined) year = validate.integer(year, 'El año', 1000, 9999);
@@ -20,10 +20,30 @@ module.exports = function(injectedStore) {
             month = validate.integer(month, 'El mes', 1, 12);
             if (year === undefined) throw error('El mes requiere un año.', 400, false);
         }
+        let rangeStart, rangeEnd
+        if (startMonth !== undefined || endMonth !== undefined) {
+            if (year !== undefined || month !== undefined) throw error('El rango no se puede combinar con mes o año', 400, false);
+            const parseMonth = value => {
+                if (typeof value !== 'string' || !/^\d{4}-\d{2}$/.test(value)) throw error('El rango requiere un mes inicial y final con formato YYYY-MM', 400, false);
+                const [y, m] = value.split('-').map(Number);
+                validate.integer(y, 'El año', 2000, new Date().getFullYear() + 1);
+                validate.integer(m, 'El mes', 1, 12);
+                return { y, m };
+            };
+            parseMonth(startMonth);
+            const end = parseMonth(endMonth);
+            if (startMonth > endMonth) throw error('El inicio del rango no puede ser posterior al final', 400, false);
+            rangeStart = `${startMonth}-01`;
+            rangeEnd = `${end.m === 12 ? end.y + 1 : end.y}-${String(end.m === 12 ? 1 : end.m + 1).padStart(2, '0')}-01`;
+        }
         let query = "select t.id, w.id as wallet_id, w.name as wallet_name, t.date, t.amount, t.detail, c.id as category_id, c.name as category_name, c.type " +
             "from transaction t, category c, wallet w " +
             "where t.category_id=c.id and c.wallet_id=w.id and w.user_id=? and w.id=?";
         let queryParameters = [userId, walletId];
+        if (rangeStart) {
+            query += ' and t.date >= ? and t.date < ?';
+            queryParameters.push(rangeStart, rangeEnd);
+        }
         if(year){
             query += " and year(t.date)=?";
             queryParameters.push(year);

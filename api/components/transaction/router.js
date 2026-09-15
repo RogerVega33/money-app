@@ -19,7 +19,7 @@ router.delete('/crypto', secure(), deleteCriptoTransaction);
 
 //FUNCTIONS
 function getTransactions(req, res, next) {
-    controller.getTransactions(req.userId, req.query.walletId, req.query.year, req.query.month, req.query.categoryId)
+    controller.getTransactions(req.userId, req.query.walletId, req.query.year, req.query.month, req.query.categoryId, req.query.startMonth, req.query.endMonth)
         .then(resultList => {
             response.success(req, res, resultList, constants.http.ok);
         })
