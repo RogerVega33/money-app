@@ -12,7 +12,7 @@ router.put('/', secure(), updateWallet);
 
 //FUNCTIONS
 function getWallets(req, res, next) {
-    controller.getWallets(req.userId)
+    controller.getWallets(req.userId, req.query.refreshPrices !== 'false')
         .then(resultList => {
             response.success(req, res, resultList, constants.http.ok);
         })

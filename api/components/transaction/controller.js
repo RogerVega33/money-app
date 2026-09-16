@@ -84,16 +84,16 @@ module.exports = function(injectedStore) {
         }
     }
 
-    async function getCryptoWalletTransactions(userId, walletId) {
+    async function getCryptoWalletTransactions(userId, walletId, refreshPrices = true) {
         walletId = validate.integer(walletId, 'La billetera');
 
         const wallet = await store.query('wallet', {id: walletId}, {user_id: userId});
         if(wallet[0]) {
             const portfolio = await store.query('portfolio', {wallet_id: walletId});
             const symbols = [...new Set(portfolio.map(item => item.symbol))];
-            const failedSymbols = await cryptoPrice.refreshStalePrices(symbols);
+            if (refreshPrices) await cryptoPrice.refreshStalePrices(symbols, userId);
 
-            let transactions = await getCryptoTransactionsByWallet(wallet[0], failedSymbols);
+            let transactions = await getCryptoTransactionsByWallet(wallet[0]);
             const totalPortfolio = transactions.reduce((acc, item) => acc + parseFloat(item.total), 0);
             return {
                 transactions,
@@ -104,7 +104,7 @@ module.exports = function(injectedStore) {
         }
     }
 
-    async function getCryptoTransactionsByWallet(cryptoWallet, failedSymbols = new Set()) {
+    async function getCryptoTransactionsByWallet(cryptoWallet, failedSymbols = cryptoPrice.failedSymbols) {
         const queryTotalCryptoTransactions = `SELECT p.id, p.amount, CAST(p.amount AS CHAR) AS exact_amount, p.symbol, IFNULL(c.price, 0) AS price, c.price IS NOT NULL AS has_price,
                 (p.amount * IFNULL(c.price, 0)) AS total_value, c.updated_at
                 FROM portfolio p LEFT JOIN crypto c ON p.symbol = c.symbol WHERE p.wallet_id = ?`

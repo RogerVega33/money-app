@@ -27,7 +27,7 @@ function getTransactions(req, res, next) {
 }
 
 function getCryptoWalletTransactions(req, res, next) {
-    controller.getCryptoWalletTransactions(req.userId, req.query.walletId)
+    controller.getCryptoWalletTransactions(req.userId, req.query.walletId, req.query.refreshPrices !== 'false')
         .then(resultList => {
             response.success(req, res, resultList, constants.http.ok);
         })

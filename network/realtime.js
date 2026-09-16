@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const auth = require('../auth');
 const { buildCorsOptions } = require('./corsMiddleware');
+const { priceEvents } = require('../api/components/wallet/cryptoPriceService');
 
 function attachRealtime(server) {
     const cors = buildCorsOptions();
@@ -31,6 +32,11 @@ function attachRealtime(server) {
         expiry.unref();
         socket.on('disconnect', () => clearTimeout(expiry));
     });
+    const onPriceUpdated = userId => {
+        io.to(`user:${userId}`).emit('crypto:pricesUpdated');
+    };
+    priceEvents.on('updated', onPriceUpdated);
+    server.once('close', () => priceEvents.off('updated', onPriceUpdated));
     return io;
 }
 

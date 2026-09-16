@@ -14,7 +14,7 @@ module.exports = function(injectedStore) {
     const cryptoPrice = cryptoPriceService(store);
     const transactionsController = require('../transaction/controller')(store);
 
-    async function getWallets(userId){
+    async function getWallets(userId, refreshPrices = true){
         let wallets;
 
         const query = "select id, name, starting_amount, detail, type, exclude_from_total, is_archived, " +
@@ -56,7 +56,7 @@ module.exports = function(injectedStore) {
             }));
 
             // Actualiza precios de la base de datos
-            await cryptoPrice.refreshStalePrices([...allSymbols]);
+            if (refreshPrices) await cryptoPrice.refreshStalePrices([...allSymbols], userId);
 
             // Construye los datos de cada wallet
             for (let cw of cryptoWallets) {
