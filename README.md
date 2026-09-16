@@ -4,6 +4,11 @@ Money app te ayuda a llevar un registro de tus gastos
 
 ## Instalación
 
+### Base de datos
+
+Las instrucciones de creación de la base de datos están en 
+[database/README.md](database/README.md).
+
 ### Node
 Editar las variables de entorno en el archivo .env (o crearlo en caso de que no exista). El archivo .env.example sirve de guía.
 
