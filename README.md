@@ -6,7 +6,7 @@ Money app te ayuda a llevar un registro de tus gastos
 
 ### Base de datos
 
-Las instrucciones de creación de la base de datos están en 
+Las instrucciones de configuración de la base de datos están en 
 [database/README.md](database/README.md).
 
 ### Node
