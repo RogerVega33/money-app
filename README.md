@@ -60,7 +60,6 @@ Ejemplo:
 CORS_ORIGIN=http://localhost:8080,https://miapp.com,https://admin.miapp.com
 ```
 
-
 #### Límites de autenticación
 
 Estas variables limitan los intentos de autenticación para reducir ataques de fuerza bruta.
@@ -123,10 +122,32 @@ docker run -d --publish 3000:3000 --env-file ./.env money-app
 ```
 
 ## Docker compose
-Editar las variables de entorno en el archivo `.env`.
+El archivo [docker-compose.yml](docker-compose.yml) levanta tanto el frontend como el backend. Requiere las imágenes
+`money-app-web:latest` y `money-app:latest` disponibles.
 
-Ejecuta:
+Para desplegar en otro servidor no hace falta copiar el repositorio. Colocar
+estos dos archivos en la misma carpeta, ejemplo:
+
+```text
+money-app/
+├── docker-compose.yml
+└── .env
+```
+
+El `.env` es obligatorio y contiene las variables **del backend**.
+
+El frontend no necesita un archivo de variables de configuración:
+`BACKEND_URL=http://backend:3000` está definida directamente en el Compose.
+Docker resuelve `backend` al servicio incluido.
+Mantener `API_PORT=3000` en el backend para coincidir con esa URL.
+
+El puerto del frontend por defecto es `8085` puedes cambiarlo en la sección de ports.
+
+Ejecuta desde la carpeta que contiene ambos archivos:
 
 ```bash
-docker-compose up
+docker compose up -d
 ```
+Puedes ingresar a la app con:
+* Desde tu máquina: http://localhost:8085
+* Desde otro dispositivo: http://IP_DEL_SERVIDOR:8085
