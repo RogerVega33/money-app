@@ -12,7 +12,7 @@ const {
     verifyRecoveryPhrase
 } = require('../../../auth/recoveryPhrase');
 
-const RECOVERY_PHRASE_WORDS = 6;
+const RECOVERY_PHRASE_WORDS = 8;
 
 function authenticationFailure() {
     return Object.assign(error('Información incorrecta', constants.http.bad_request, false), { authenticationFailed: true });
