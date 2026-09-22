@@ -23,7 +23,6 @@ database/
 └── README.md
 ```
 
-
 ### Crear la base de datos y el usuario
 
 Si la base o la cuenta ya existen, omitir su creación. Para

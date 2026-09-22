@@ -96,9 +96,11 @@ para aplicar el cambio de Nginx.
 
 ## Node
 
-Instala las dependencias del proyecto:
+Usa Node.js 22.13+ o 24+.
+
+Instala las dependencias desde la carpeta del proyecto usando las versiones guardadas en `package-lock.json`:
 ```bash
-npm install
+npm ci
 ```
 
 Inicia el servidor:

@@ -10,6 +10,9 @@
   },
   "author": "Roger Vega",
   "license": "ISC",
+  "engines": {
+    "node": "^22.13.0 || ^24.0.0"
+  },
   "dependencies": {
     "@scure/bip39": "^2.0.1",
     "axios": "^1.12.2",
