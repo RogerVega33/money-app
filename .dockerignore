@@ -10,3 +10,26 @@ coverage
 .env.*
 logs
 database/
+
+# Local editor settings and database connection metadata
+**/.idea
+**/.vscode
+**/.history
+**/*.code-workspace
+**/.DS_Store
+
+# Local logs, database dumps and backups are never runtime assets
+**/*.log
+**/Backups
+**/backups
+**/dumps
+**/*.sql
+**/*.sql.gz
+**/*.sql.bak
+**/*.sqlite
+**/*.sqlite3
+**/*.db
+
+# Environment files at any depth (including local copies)
+**/.env
+**/.env.*
