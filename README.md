@@ -153,3 +153,11 @@ docker compose up -d
 Puedes ingresar a la app con:
 * Desde tu máquina: http://localhost:8085
 * Desde otro dispositivo: http://IP_DEL_SERVIDOR:8085
+
+## Licencia
+
+Copyright 2026 Roger Vega.
+
+Este proyecto se distribuye bajo la [Apache License 2.0](LICENSE). Consulta
+también el archivo de [atribuciones](NOTICE). Las dependencias de terceros
+conservan sus respectivas licencias.
