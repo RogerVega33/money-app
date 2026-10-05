@@ -66,6 +66,7 @@ CREATE TABLE `transaction` (
   CONSTRAINT `transaction_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `auth_session`;
 DROP TABLE IF EXISTS `user`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -83,6 +84,21 @@ CREATE TABLE `user` (
   UNIQUE KEY `email` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+CREATE TABLE `auth_session` (
+    `sid` CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `user_id` INT(11) NOT NULL,
+    `initial_ip` VARCHAR(45) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `last_ip` VARCHAR(45) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `browser` VARCHAR(80) NOT NULL,
+    `os` VARCHAR(80) NOT NULL,
+    `created_at` BIGINT UNSIGNED NOT NULL,
+    `expires_at` BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (`sid`),
+    KEY `idx_auth_session_user` (`user_id`),
+    KEY `idx_auth_session_expiry` (`expires_at`),
+    CONSTRAINT `fk_auth_session_user`
+        FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 DROP TABLE IF EXISTS `vw_crypto_holdings`;
 /*!50001 DROP VIEW IF EXISTS `vw_crypto_holdings`*/;
 SET @saved_cs_client     = @@character_set_client;

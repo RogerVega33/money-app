@@ -5,8 +5,8 @@ let maxArrayItems = 5;
 // Campos que se ocultan con *** en el log
 const hiddenFields = new Set([
     'password', 'oldpassword', 'newpassword', 'confirmpassword',
-    'token', 'accesstoken', 'refreshtoken', 'authorization', 'cookie', 'setcookie',
-    'recoveryphrase', 'passwordhash', 'secret', 'jwtsecret',
+    'token', 'accesstoken', 'refreshtoken', 'xsessiontoken', 'authorization', 'cookie', 'setcookie',
+    'recoveryphrase', 'passwordhash', 'secret', 'jwtsecret', 'sid',
     'amount', 'exactamount', 'startingamount', 'totalincome', 'totalexpense',
     'income', 'expense', 'expenses', 'savings', 'total', 'totalvalue',
     'balance', 'currentbalance', 'runningbalance', 'signedamount',

@@ -15,7 +15,8 @@ function errors(err, req, res, next) {
     if (parserError) return response.error(req, res, parserError[1], parserError[0]);
 
     if (err.expose === true && Number.isInteger(err.statusCode) && err.statusCode >= 400 && err.statusCode < 500) {
-        return response.error(req, res, err.message, err.statusCode);
+        return response.error(req, res, err.message, err.statusCode, undefined,
+            err.code === 'SESSION_REVOKED' ? err.code : undefined);
     }
 
     res.locals.logError = err;

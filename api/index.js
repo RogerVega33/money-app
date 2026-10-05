@@ -52,7 +52,7 @@ app.use(errors);
 app.use(errorsNotDefined);
 
 const server = createServer(app);
-app.set('realtime', attachRealtime(server));
+app.set('realtime', attachRealtime(server, app.get('trust proxy fn')));
 server.listen(config.api.port, () => {
    console.log('listening on Server port ', config.api.port);
 });

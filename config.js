@@ -24,6 +24,7 @@ module.exports = {
     },
     jwt: {
         secret: jwtSecret,
+        sessionDays: positiveInteger('JWT_SESSION_DAYS', 30),
     },
     mysql: {
         host: process.env.MYSQL_HOST || 'localhost',

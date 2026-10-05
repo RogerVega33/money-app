@@ -18,7 +18,7 @@ function authenticationFailure() {
     return Object.assign(error('Información incorrecta', constants.http.bad_request, false), { authenticationFailed: true });
 }
 
-module.exports = function(injectedStore) {
+module.exports = function(injectedStore, authService = auth) {
     let store = injectedStore;
     if(!store){
         store = require('../../../store/mysql');
@@ -75,12 +75,14 @@ module.exports = function(injectedStore) {
         if(!valid) throw authenticationFailure();
 
         const newPasswordHash = await utils.getHash(body.newPassword);
-        await store.update(TABLE, { password: newPasswordHash }, { id: user[0].id });
+        const updated = await store.changePasswordAndRevokeSessions(user[0].id, newPasswordHash, user[0].password);
+        if (!updated) throw authenticationFailure();
+        authService.userSessionsRevoked(user[0].id);
 
         return { message: 'Contraseña actualizada correctamente' };
     }
 
-    async function login(username, password) {
+    async function login(username, password, req) {
         if (typeof password !== 'string' || !password) throw authenticationFailure();
         const user = await store.query(TABLE, { username: username });
         if (!user.length) throw authenticationFailure();
@@ -102,7 +104,7 @@ module.exports = function(injectedStore) {
 
         await store.update(TABLE, { last_login: new Date(), login_attempts: 0 }, { id: user[0].id });
 
-        return { ...response, token: auth.sign(response) };
+        return { ...response, token: await authService.createSession(response, req, user[0].password) };
     }
 
     async function changePassword(username, oldPassword, newPassword) {
@@ -117,7 +119,9 @@ module.exports = function(injectedStore) {
         if (!match) throw authenticationFailure();
 
         const newPasswordHash = await utils.getHash(newPassword);
-        await store.update(TABLE, { password: newPasswordHash }, { id: user[0].id });
+        const updated = await store.changePasswordAndRevokeSessions(user[0].id, newPasswordHash, user[0].password);
+        if (!updated) throw authenticationFailure();
+        authService.userSessionsRevoked(user[0].id);
 
         return { message: 'Contraseña actualizada correctamente' };
     }

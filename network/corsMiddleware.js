@@ -21,7 +21,7 @@ function buildCorsOptions() {
             return callback(error('Forbidden', 403, false));
         },
         credentials: true,
-        exposedHeaders: ['Retry-After'],
+        exposedHeaders: ['Retry-After', 'X-Session-Token'],
     };
 }
 

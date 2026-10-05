@@ -5,9 +5,12 @@ const constants = require('../../../utils/constants');
 const controller = require('./index');
 const config = require('../../../config.js');
 const secure = require('../../../auth/secure');
+const logout = require('../../../auth/logout');
 const { createAuthRateLimit } = require('../../../auth/rateLimit');
 const limits = createAuthRateLimit(config.authRateLimit);
 
+// Cerrar sesión debe seguir disponible aunque se hayan agotado los intentos.
+router.post('/logout', logout());
 router.use(limits.ip);
 
 //ROUTES
@@ -41,7 +44,8 @@ function recoverUser(req, res, next) {
 }
 
 function login(req, res, next){
-    controller.login(req.body.username, req.body.password)
+    res.setHeader('Cache-Control', 'no-store');
+    controller.login(req.body.username, req.body.password, req)
         .then(body => {
             res.locals.authAttempt.finish('success');
             response.success(req, res, body, constants.http.ok);
