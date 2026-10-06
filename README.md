@@ -91,6 +91,12 @@ Express solo confía en esa cabecera cuando la conexión proviene de loopback;
 Para Docker Compose, los archivos de compose ya configuran `TRUST_PROXY=1` para el único salto Nginx
 y no publican el puerto del backend para no tener un acceso directo al backend.
 
+Si el frontend está detrás de otro proxy inverso, configurar `TRUSTED_PROXY_IP` en el `.env` de Compose 
+con la dirección del proxy tal como la ve Nginx. Esto ayuda a obtener la IP real del cliente que se conecta a la 
+aplicación, sin esta configuración los dispositivos que se conectan tendrán la IP del proxy inverso.
+Nginx recupera la IP de `X-Forwarded-For` únicamente desde ese origen y reenvía
+una sola IP al backend; mantener `TRUST_PROXY=1`.
+
 Para otra topología, configura `TRUST_PROXY` con la IP o CIDR del proxy de
 confianza. No uses confianza global. Reconstruye también la imagen del frontend
 para aplicar el cambio de Nginx.

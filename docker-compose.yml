@@ -13,6 +13,8 @@ services:
       - "8085:80"
     environment:
       - BACKEND_URL=http://backend:3000
+      # Opcional: IP del proxy inverso tal como la ve el frontend.
+      # - TRUSTED_PROXY_IP=${TRUSTED_PROXY_IP:-}
     depends_on:
       - backend
 
