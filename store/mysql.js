@@ -1,7 +1,7 @@
 const mysql = require('mysql');
 const logger = require('../network/logger');
 const config = require('../config');
-const { changePasswordAndRevokeSessions } = require('./passwordTransaction');
+const { changePasswordAndRevokeSessions, recoverPasswordAndRevokeSessions } = require('./passwordTransaction');
 
 const dbconf = {
     host: config.mysql.host,
@@ -106,4 +106,6 @@ module.exports = {
     personalizedQuery,
     changePasswordAndRevokeSessions: (userId, passwordHash, previousHash) =>
         changePasswordAndRevokeSessions(pool, userId, passwordHash, previousHash),
+    recoverPasswordAndRevokeSessions: (userId, passwordHash, previousPasswordHash, recoveryPhraseHash, previousRecoveryPhraseHash) =>
+        recoverPasswordAndRevokeSessions(pool, userId, passwordHash, previousPasswordHash, recoveryPhraseHash, previousRecoveryPhraseHash),
 };

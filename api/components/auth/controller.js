@@ -75,11 +75,14 @@ module.exports = function(injectedStore, authService = auth) {
         if(!valid) throw authenticationFailure();
 
         const newPasswordHash = await utils.getHash(body.newPassword);
-        const updated = await store.changePasswordAndRevokeSessions(user[0].id, newPasswordHash, user[0].password);
+        const recoveryPhrase = generateRecoveryPhrase(RECOVERY_PHRASE_WORDS);
+        const recoveryPhraseHash = await hashRecoveryPhrase(recoveryPhrase);
+        const updated = await store.recoverPasswordAndRevokeSessions(user[0].id, newPasswordHash,
+            user[0].password, recoveryPhraseHash, user[0].recovery_phrase);
         if (!updated) throw authenticationFailure();
         authService.userSessionsRevoked(user[0].id);
 
-        return { message: 'Contraseña actualizada correctamente' };
+        return { message: 'Contraseña actualizada correctamente', recoveryPhrase };
     }
 
     async function login(username, password, req) {

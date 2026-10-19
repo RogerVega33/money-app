@@ -32,6 +32,7 @@ function createUser(req, res, next) {
 }
 
 function recoverUser(req, res, next) {
+    res.setHeader('Cache-Control', 'no-store');
     controller.recoverUser(req.body)
         .then(body => {
             res.locals.authAttempt.finish('success');
